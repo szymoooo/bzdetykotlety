@@ -268,7 +268,9 @@ const SUPABASE_CONFIG = {
 
 const SUPABASE_URL = SUPABASE_CONFIG.url;
 const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ZMIENIONO NA supabaseClient (unikamy konfliktu z rozszerzeniami)
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ====== ZMIENNE ======
 let currentMonth = new Date().toISOString().substring(0, 7);
@@ -313,10 +315,10 @@ function isCorrect(type, result){
   return false;
 }
 
-// ====== SUPABASE OPERATIONS ======
+// ====== SUPABASE OPERATIONS (używamy supabaseClient) ======
 async function loadAvailableMonths() {
   try {
-    const { data, error } = await supabase.from('matches').select('date').order('date', { ascending: false });
+    const { data, error } = await supabaseClient.from('matches').select('date').order('date', { ascending: false });
     if(error) throw error;
     availableMonths.clear();
     data.forEach(m => { if(m.date) availableMonths.add(m.date.substring(0, 7)); });
@@ -330,7 +332,7 @@ async function loadMonthData(month, forceRefresh = false) {
   try {
     const startDate = `${month}-01`;
     const endDate = `${month}-31`;
-    const { data, error } = await supabase.from('matches').select('*').gte('date', startDate).lte('date', endDate).order('date', { ascending: false });
+    const { data, error } = await supabaseClient.from('matches').select('*').gte('date', startDate).lte('date', endDate).order('date', { ascending: false });
     if(error) throw error;
     cachedData[month] = data || [];
     return cachedData[month];
@@ -339,7 +341,7 @@ async function loadMonthData(month, forceRefresh = false) {
 
 async function addMatchToSupabase(matchData) {
   try {
-    const { error } = await supabase.from('matches').insert([matchData]);
+    const { error } = await supabaseClient.from('matches').insert([matchData]);
     if(error) throw error;
     const month = matchData.date.substring(0, 7);
     cachedData[month] = null;
@@ -351,7 +353,7 @@ async function addMatchToSupabase(matchData) {
 
 async function updateMatchResult(id, result, verified) {
   try {
-    const { error } = await supabase.from('matches').update({ result, verified }).eq('id', id);
+    const { error } = await supabaseClient.from('matches').update({ result, verified }).eq('id', id);
     if(error) throw error;
     Object.keys(cachedData).forEach(k => cachedData[k] = null);
     showToast('✅ Zaktualizowano');
@@ -362,7 +364,7 @@ async function updateMatchResult(id, result, verified) {
 async function deleteMatchFromDB(id) {
   if(!confirm('Usunąć mecz?')) return false;
   try {
-    const { error } = await supabase.from('matches').delete().eq('id', id);
+    const { error } = await supabaseClient.from('matches').delete().eq('id', id);
     if(error) throw error;
     Object.keys(cachedData).forEach(k => cachedData[k] = null);
     showToast('✅ Usunięto');
@@ -546,7 +548,10 @@ function updateLiveSignal(){
   else html = '<span class="signal-badge signal-none">— brak sygnału</span>';
   document.getElementById("live-signal").innerHTML = html;
 }
-['cornerv3','cornerv3a','sniper','auto'].forEach(id=>{ document.getElementById(id)?.addEventListener("input", updateLiveSignal); });
+document.getElementById('cornerv3')?.addEventListener("input", updateLiveSignal);
+document.getElementById('cornerv3a')?.addEventListener("input", updateLiveSignal);
+document.getElementById('sniper')?.addEventListener("input", updateLiveSignal);
+document.getElementById('auto')?.addEventListener("input", updateLiveSignal);
 
 // ====== IMPORT FUNCTIONS ======
 window.loadSource = function(source, input){ showToast(`📁 Załadowano ${source}`); }
@@ -598,7 +603,7 @@ function exportTodayTXT(){
 
 async function clearAll(){
   if(confirm('Usunąć WSZYSTKIE dane z Supabase?')){
-    const {error} = await supabase.from('matches').delete().neq('id',0);
+    const {error} = await supabaseClient.from('matches').delete().neq('id',0);
     if(error) showToast('❌ Błąd');
     else { cachedData={}; availableMonths.clear(); await loadAvailableMonths(); await renderMatches(); showToast('✅ Wyczyszczono'); }
   }
@@ -626,7 +631,6 @@ window.importFromJSON = importFromJSON;
 window.clearAll = clearAll;
 window.exportJSON = exportJSON;
 window.recalculate = recalculate;
-window.exportTodayTXT = exportTodayTXT;
-</script>
+window.exportTodayTXT = exportTodayTXT;</script>
 </body>
 </html>
