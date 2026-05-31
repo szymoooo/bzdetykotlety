@@ -1,0 +1,9 @@
+# Supabase config - WAŻNE! Nie wrzucaj kluczy!
+config.js
+*.config.js
+!config.example.js
+
+# Inne
+.DS_Store
+*.log
+node_modules/
