@@ -2,43 +2,31 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Analiza źródeł typów - Supabase Cloud</title>
+<title>Analiza źródeł typów - Supabase</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+// Sprawdzenie czy config.js działa
+if(typeof SUPABASE_CONFIG === 'undefined') {
+    document.body.innerHTML = '<div style="padding:50px;text-align:center"><h1>❌ BŁĄD</h1><p>Brak pliku config.js</p><p>Utwórz plik config.js z zawartością:<br><code>const SUPABASE_CONFIG = { url: "...", anonKey: "..." };</code></p></div>';
+    throw new Error("Brak config.js");
+}
+console.log('✅ Config załadowany:', SUPABASE_CONFIG.url);
+</script>
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --primary:#2563eb;
   --success:#16a34a; --success-dark:#059669;
   --danger:#dc2626; --border:#e5e7eb;
   --text:#111827; --muted:#6b7280;
-  --signal-under:#0ea5e9;
-  --signal-over:#f59e0b;
-  --signal-none:#9ca3af;
 }
-.logo-container{text-align:center;margin-bottom:12px}
-.logo{max-width:100%;width:100%;height:auto}
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,Arial;background:var(--bg);color:var(--text)}
 .container{max-width:1300px;margin:auto;padding:24px}
 h1{text-align:center;margin-bottom:6px}
-.card{
-  background:var(--card);
-  border-radius:12px;
-  padding:16px;
-  box-shadow:0 8px 20px rgba(0,0,0,.05);
-  margin-bottom:20px;
-}
-.form-grid{
-  display:grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap:12px;
-}
-input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid var(--border);
-  font-size:14px;
-  width:120px;
-}
+.card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.05);margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
+input,select{padding:10px;border-radius:8px;border:1px solid var(--border);font-size:14px;width:120px}
 input[type="date"],input[type="text"]{width:100%}
 button{padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
 .btn-primary{background:var(--primary);color:#fff}
@@ -51,99 +39,65 @@ th{background:#f9fafb;color:var(--muted)}
 tr.verified{background:#f0fdf4}
 tr.lost-row{background:#fee2e2}
 .actions{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
-/* ===== IMPORTER ===== */
 .import-card{background:#1e293b;border-radius:12px;padding:16px;margin-bottom:20px;color:#e2e8f0}
 .import-card h3{color:#38bdf8;margin:0 0 12px 0;font-size:15px}
 .import-sources{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
-.import-box{background:#0f172a;border-radius:8px;padding:12px;border:2px dashed #334155;text-align:center;cursor:pointer;transition:all .2s}
+.import-box{background:#0f172a;border-radius:8px;padding:12px;border:2px dashed #334155;text-align:center;cursor:pointer}
 .import-box:hover{border-color:#38bdf8}
 .import-box.loaded{border-color:#22c55e;background:#052e16}
 .import-box input{display:none}
 .import-box-icon{font-size:22px;margin-bottom:4px}
 .import-box-label{font-size:12px;font-weight:700;color:#94a3b8}
-.import-box.loaded .import-box-label{color:#22c55e}
-.import-box-sub{font-size:10px;color:#475569;margin-top:2px}
 .import-preview{display:none;margin-top:14px}
 .import-preview table{width:100%;border-collapse:collapse;font-size:13px}
-.import-preview th{background:#0f172a;color:#38bdf8;padding:8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-.import-preview td{padding:8px;border-bottom:1px solid #1e293b;text-align:center;color:#cbd5e1}
-.import-preview td.match-name{text-align:left;font-weight:600;color:#f1f5f9}
-.import-preview tr:hover td{background:#1e293b}
-.import-preview tr.row-selected td{background:#0c2340}
-.itype-select{background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 6px;font-size:12px;width:120px}
-.itype-select:disabled{opacity:.4}
-.icheckbox{width:16px;height:16px;cursor:pointer;accent-color:#38bdf8}
-.import-filter{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
-.filter-btn{padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all .2s}
+.import-preview th{background:#0f172a;color:#38bdf8;padding:8px}
+.import-preview td{padding:8px;border-bottom:1px solid #1e293b;color:#cbd5e1}
+.itype-select{background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 6px}
+.icheckbox{width:16px;height:16px;accent-color:#38bdf8}
+.import-filter{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-btn{padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700}
 .filter-btn.active{box-shadow:0 0 0 2px #38bdf8}
 .filter-all{background:#334155;color:#e2e8f0}
 .filter-under{background:#dbeafe;color:#1d4ed8}
-.filter-over{background:#fef3c7;color:#b45309}
 .filter-flag{background:#dcfce7;color:#15803d}
 .filter-none{background:#f3f4f6;color:#6b7280}
-.import-actions{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
-.btn-import{background:#0ea5e9;color:#fff;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:13px}
-.btn-import:disabled{background:#334155;color:#475569;cursor:not-allowed}
-.btn-select-sig{background:#1e293b;color:#38bdf8;border:1px solid #38bdf8;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
-.import-count{font-size:13px;color:#94a3b8;margin-left:auto}
-/* ===== SYGNAŁY ===== */
-.signal-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:5px 10px;
-  border-radius:20px;
-  font-weight:700;
-  font-size:12px;
-  white-space:nowrap;
-}
+.btn-import{background:#0ea5e9;color:#fff;padding:9px 18px;border-radius:8px}
+.btn-select-sig{background:#1e293b;color:#38bdf8;border:1px solid #38bdf8;padding:7px 14px;border-radius:8px}
+.signal-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-weight:700;font-size:12px}
 .signal-under{background:#dbeafe;color:#1d4ed8;border:2px solid #93c5fd}
-.signal-over{background:#fef3c7;color:#b45309;border:2px solid #fcd34d}
 .signal-none{background:#f3f4f6;color:#6b7280;border:2px solid #e5e7eb}
 .signal-flag{background:#dcfce7;color:#15803d;border:2px solid #86efac}
-.flag-tooltip{font-size:11px;color:#15803d;display:block;margin-top:2px}
-/* legenda */
-.legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:13px}
-.legend-item{display:flex;align-items:center;gap:6px}
-/* stats */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .stat-box{border-radius:10px;padding:12px 16px;text-align:center}
 .stat-box.under-box{background:#dbeafe;border:2px solid #93c5fd}
 .stat-box.none-box{background:#f3f4f6;border:2px solid #e5e7eb}
-.stat-num{font-size:26px;font-weight:800;line-height:1}
-.stat-label{font-size:12px;color:var(--muted);margin-top:4px}
-.stat-pct{font-size:13px;font-weight:700;margin-top:2px}
-/* toast */
-.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#e2e8f0;border:2px solid #a78bfa;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transform:translateY(20px);transition:all .3s;pointer-events:none;z-index:999}
-.toast.show{opacity:1;transform:translateY(0)}
-/* nawigacja */
-.month-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding:10px;background:var(--card);border-radius:12px;align-items:center}
-.month-btn{padding:8px 16px;border-radius:8px;background:var(--bg);border:1px solid var(--border);cursor:pointer;transition:all .2s;font-size:13px;font-weight:600}
-.month-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.sync-status{font-size:12px;color:var(--muted);margin-left:auto}
-.sync-status.online{color:var(--success)}
+.stat-num{font-size:26px;font-weight:800}
+.stat-label{font-size:12px;color:var(--muted)}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;border-radius:10px;padding:12px 20px;opacity:0;transition:all .3s;z-index:999}
+.toast.show{opacity:1}
+.month-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding:10px;background:var(--card);border-radius:12px}
+.month-btn{padding:8px 16px;border-radius:8px;background:var(--bg);border:1px solid var(--border);cursor:pointer}
+.month-btn.active{background:var(--primary);color:white}
 .loading-spinner{display:inline-block;width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .expandable-month{border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden}
-.month-header{background:var(--bg);padding:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:16px}
-.month-header:hover{background:#e5e7eb}
+.month-header{background:var(--bg);padding:15px;cursor:pointer;display:flex;justify-content:space-between}
 .month-content{padding:15px}
+.sync-status{font-size:12px;margin-left:auto}
+.sync-status.online{color:#16a34a}
 </style>
 </head>
 <body>
 <div class="container">
-<div class="logo-container">
-  <img src="logo.png" alt="Analiza Typów" class="logo" onerror="this.style.display='none'">
-</div>
-
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center">
-    <div><span id="syncStatus" class="sync-status">🔍 Łączenie z Supabase...</span></div>
+    <div><span id="syncStatus" class="sync-status">🔍 Łączenie...</span></div>
     <div>
       <button class="btn-secondary" onclick="syncWithCloud()">☁️ Synchronizuj</button>
-      <button class="btn-secondary" onclick="exportToJSON()">📥 Eksport JSON</button>
-      <button class="btn-secondary" onclick="importFromJSON()">📤 Import JSON</button>
-      <button class="btn-danger" onclick="clearAll()">🗑 Wyczyść wszystko</button>
+      <button class="btn-secondary" onclick="exportToJSON()">📥 Eksport</button>
+      <button class="btn-secondary" onclick="importFromJSON()">📤 Import</button>
+      <button class="btn-danger" onclick="clearAll()">🗑 Wyczyść</button>
     </div>
   </div>
 </div>
@@ -151,67 +105,59 @@ tr.lost-row{background:#fee2e2}
 <div class="month-nav" id="monthNav"></div>
 
 <div class="card">
-  <div style="font-weight:700;margin-bottom:10px">🧮 System sygnałów</div>
   <div class="legend">
-    <div class="legend-item"><span class="signal-badge signal-under">🔵 UNDER 5.5</span><span>Cv3&lt;4.0 + Cv3a&lt;4.0 + AUTO&lt;5.5 → <b>87% celność</b></span></div>
-    <div class="legend-item"><span class="signal-badge signal-none">⬜ BRAK</span><span>Nie typuj — brak wyraźnego sygnału</span></div>
-    <div class="legend-item"><span class="signal-badge signal-flag">🟢 &lt;5.5</span><span>Sygnał pomocniczy Under 5.5 → <b>85% celność</b></span></div>
+    <div class="legend-item"><span class="signal-badge signal-under">🔵 UNDER 5.5</span><span>Cv3&lt;4 + Cv3a&lt;4 + AUTO&lt;5.5 → 87%</span></div>
+    <div class="legend-item"><span class="signal-badge signal-flag">🟢 &lt;5.5</span><span>Flaga pomocnicza → 85%</span></div>
+    <div class="legend-item"><span class="signal-badge signal-none">⬜ BRAK</span><span>Nie typuj</span></div>
   </div>
   <div class="stats-grid">
-    <div class="stat-box under-box"><div class="stat-num" id="stat-under-n">—</div><div class="stat-label">UNDER 5.5 — trafione/typowane</div><div class="stat-pct" id="stat-under-pct"></div></div>
-    <div class="stat-box none-box"><div class="stat-num" id="stat-none-n">—</div><div class="stat-label">Brak sygnału — trafione/typowane</div><div class="stat-pct" id="stat-none-pct"></div></div>
-    <div class="stat-box" style="background:#dcfce7;border:2px solid #86efac"><div class="stat-num" id="stat-flag-n">—</div><div class="stat-label">🟢 Zielona flaga — trafione/typowane</div><div class="stat-pct" id="stat-flag-pct"></div></div>
+    <div class="stat-box under-box"><div class="stat-num" id="stat-under-n">—</div><div class="stat-label">UNDER 5.5</div><div class="stat-pct" id="stat-under-pct"></div></div>
+    <div class="stat-box none-box"><div class="stat-num" id="stat-none-n">—</div><div class="stat-label">Brak sygnału</div><div class="stat-pct" id="stat-none-pct"></div></div>
+    <div class="stat-box" style="background:#dcfce7;border:2px solid #86efac"><div class="stat-num" id="stat-flag-n">—</div><div class="stat-label">🟢 Flaga</div><div class="stat-pct" id="stat-flag-pct"></div></div>
   </div>
 </div>
 
 <div class="import-card">
-  <h3>⚡ Import automatyczny — wczytaj pliki JSON</h3>
+  <h3>⚡ Import JSON</h3>
   <div class="import-sources">
     <div class="import-box" id="box-cv3" onclick="document.getElementById('file-cv3').click()">
       <input type="file" id="file-cv3" accept=".json" onchange="loadSource('cv3',this)">
       <div class="import-box-icon">📂</div>
       <div class="import-box-label" id="label-cv3">Cornerv3</div>
-      <div class="import-box-sub">cv3_YYYY-MM-DD.json</div>
     </div>
     <div class="import-box" id="box-cv3a" onclick="document.getElementById('file-cv3a').click()">
       <input type="file" id="file-cv3a" accept=".json" onchange="loadSource('cv3a',this)">
       <div class="import-box-icon">📂</div>
       <div class="import-box-label" id="label-cv3a">Cornerv3a</div>
-      <div class="import-box-sub">cv3a_YYYY-MM-DD.json</div>
     </div>
     <div class="import-box" id="box-sniper" onclick="document.getElementById('file-sniper').click()">
       <input type="file" id="file-sniper" accept=".json" onchange="loadSource('sniper',this)">
       <div class="import-box-icon">📂</div>
-      <div class="import-box-label" id="label-sniper">Sniper (Pattern)</div>
-      <div class="import-box-sub">pattern_analysis_exact_*.json</div>
+      <div class="import-box-label" id="label-sniper">Sniper</div>
     </div>
     <div class="import-box" id="box-auto" onclick="document.getElementById('file-auto').click()">
       <input type="file" id="file-auto" accept=".json" onchange="loadSource('auto',this)">
       <div class="import-box-icon">📂</div>
       <div class="import-box-label" id="label-auto">AUTO</div>
-      <div class="import-box-sub">sniper_predictions_*.json</div>
     </div>
-    <div class="import-box" id="box-results" onclick="document.getElementById('file-results').click()" style="border-color:#10b981">
+    <div class="import-box" id="box-results" onclick="document.getElementById('file-results').click()">
       <input type="file" id="file-results" accept=".json" onchange="loadResults(this)">
       <div class="import-box-icon">✅</div>
-      <div class="import-box-label" id="label-results" style="color:#10b981">Wyniki</div>
-      <div class="import-box-sub">wyniki_DD.MM.YYYY.json</div>
+      <div class="import-box-label" id="label-results">Wyniki</div>
     </div>
   </div>
-
   <div class="import-preview" id="import-preview">
     <div class="import-filter">
       <button class="filter-btn filter-all active" onclick="filterImport('all',this)">Wszystkie</button>
-      <button class="filter-btn filter-under" onclick="filterImport('under',this)">🔵 UNDER</button>
-      <button class="filter-btn filter-flag" onclick="filterImport('flag',this)">🟢 Flaga</button>
-      <button class="filter-btn filter-none" onclick="filterImport('none',this)">— Brak</button>
+      <button class="filter-btn filter-under" onclick="filterImport('under',this)">UNDER</button>
+      <button class="filter-btn filter-flag" onclick="filterImport('flag',this)">Flaga</button>
+      <button class="filter-btn filter-none" onclick="filterImport('none',this)">Brak</button>
     </div>
     <table><thead><tr><th><input type="checkbox" id="check-all" onchange="toggleAll(this)"></th><th>Mecz</th><th>Cv3</th><th>Cv3a</th><th>Sniper</th><th>AUTO</th><th>Sygnał</th><th>Typ</th></tr></thead><tbody id="import-tbody"></tbody></table>
   </div>
   <div class="import-actions">
     <button class="btn-select-sig" onclick="selectBySig()">☑ Zaznacz z sygnałem</button>
     <button class="btn-import" id="btn-add-all" onclick="addSelected()" disabled>➕ Dodaj zaznaczone</button>
-    <span class="import-count" id="import-count"></span>
   </div>
 </div>
 
@@ -219,69 +165,41 @@ tr.lost-row{background:#fee2e2}
 <div class="form-grid">
 <input type="date" id="date">
 <input type="text" id="match" placeholder="Mecz">
-<select id="type"><option>Under 5.5 HT</option><option>Over 3.5 HT</option><option>Under 9.5 FT</option><option>Over 9.5 FT</option><option>?</option></select>
-<input type="number" step="0.01" id="cornerv3" placeholder="Cornerv3">
-<input type="number" step="0.01" id="cornerv3a" placeholder="Cornerv3a">
-<input type="number" step="0.01" id="sniper" placeholder="SniperPro">
-<input type="number" step="0.01" id="auto" placeholder="AUTO-SNIPER">
+<select id="type"><option>Under 5.5 HT</option><option>Over 3.5 HT</option><option>?</option></select>
+<input type="number" step="0.01" id="cornerv3" placeholder="Cv3">
+<input type="number" step="0.01" id="cornerv3a" placeholder="Cv3a">
+<input type="number" step="0.01" id="sniper" placeholder="Sniper">
+<input type="number" step="0.01" id="auto" placeholder="AUTO">
 </div>
-<div id="live-signal" style="margin-top:12px;text-align:center;min-height:36px"></div>
+<div id="live-signal" style="margin-top:12px;text-align:center"></div>
 <div class="actions">
   <button class="btn-primary" onclick="addMatch()">Dodaj</button>
-  <button class="btn-secondary" onclick="exportJSON()">Eksport JSON</button>
-  <button class="btn-secondary" onclick="jsonInput.click()">Import JSON</button>
-  <button class="btn-secondary" onclick="recalculate()">Przelicz</button>
-  <button class="btn-txt" onclick="exportTodayTXT()">📄 Dzisiejsze TXT</button>
+  <button class="btn-secondary" onclick="exportJSON()">Eksport</button>
+  <button class="btn-secondary" onclick="jsonInput.click()">Import</button>
+  <button class="btn-txt" onclick="exportTodayTXT()">📄 TXT</button>
 </div>
 <input type="file" id="jsonInput" accept=".json" hidden>
 </div>
 
 <div class="card">
-<div style="margin-bottom:12px;font-weight:700">📋 Mecze (<span id="currentMonthLabel"></span>)</div>
 <div id="matchesTableContainer"></div>
 </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-// ====== WCZYTAJ KONFIGURACJĘ Z PLIKU config.js ======
-if(typeof SUPABASE_CONFIG === 'undefined') {
-    document.body.innerHTML = `
-        <div style="padding:50px;text-align:center;font-family:monospace;background:#fff;min-height:100vh">
-            <h2 style="color:#dc2626">⚠️ Brak konfiguracji</h2>
-            <p>Utwórz plik <code style="background:#f0f0f0;padding:2px 8px;border-radius:4px">config.js</code> w tym samym katalogu co index.html</p>
-            <div style="background:#f0f0f0;padding:20px;border-radius:8px;margin:20px auto;max-width:600px;text-align:left">
-                <strong>📄 config.js:</strong>
-                <pre style="background:#1a1a2e;color:#eee;padding:15px;border-radius:8px;overflow-x:auto">
-const SUPABASE_CONFIG = {
-    url: 'https://TWOJ_PROJEKT.supabase.co',
-    anonKey: 'TWOJ_KLUCZ_ANON_KEY'
-};
-                </pre>
-            </div>
-            <p>Po utworzeniu pliku <strong>odśwież stronę (F5)</strong></p>
-        </div>
-    `;
-    throw new Error('Brak config.js - utwórz plik z konfiguracją Supabase');
-}
-
+// ====== KONFIGURACJA Z config.js ======
 const SUPABASE_URL = SUPABASE_CONFIG.url;
 const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
-
-// ZMIENIONO NA supabaseClient (unikamy konfliktu z rozszerzeniami)
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ====== ZMIENNE ======
 let currentMonth = new Date().toISOString().substring(0, 7);
 let availableMonths = new Set();
 let cachedData = {};
-let isLoading = false;
-let imp = {cv3:{}, cv3a:{}, sniper:{}, auto:{}};
 let importedMatches = [];
 let currentFilter = 'all';
+let imp = {cv3:{}, cv3a:{}, sniper:{}, auto:{}};
 
-// ====== FUNKCJE POMOCNICZE ======
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -290,6 +208,7 @@ function showToast(msg){
 }
 
 function round(x){ return Math.round(x*10)/10; }
+function fixEnc(str){ if(!str) return str; try{ return decodeURIComponent(escape(str)); }catch(e){ return str; } }
 
 function getSignal(cv3, cv3a, sniper, autoVal){
   if(cv3 < 4.0 && cv3a < 4.0 && autoVal < 5.5) return "under";
@@ -298,96 +217,72 @@ function getSignal(cv3, cv3a, sniper, autoVal){
 
 function getFlag(cv3, cv3a, snp, autoVal){
   const flags = [];
-  if(Math.abs(cv3-cv3a)<0.5 && cv3<4.0 && cv3a<4.0) flags.push("Cv3≈Cv3a<4 (96%)");
-  else if(cv3>=3.0 && cv3<4.0 && cv3a>=2.5 && cv3a<3.5) flags.push("Cv3[3-4)+Cv3a[2.5-3.5) (100%)");
-  else if(cv3>=1.5 && cv3<4.0) flags.push("Cv3[1.5-4.0) (92%)");
-  if(autoVal>=4.0 && autoVal<4.5) flags.push("AUTO[4.0-4.5) (92%)");
-  if(snp<3.5) flags.push("Sniper<3.5 (89%)");
-  else if(snp>=4.0 && snp<4.3) flags.push("Sniper[4.0-4.3) (84%)");
+  if(Math.abs(cv3-cv3a)<0.5 && cv3<4.0 && cv3a<4.0) flags.push("Cv3≈Cv3a<4");
+  else if(cv3>=3.0 && cv3<4.0 && cv3a>=2.5 && cv3a<3.5) flags.push("Cv3[3-4)+Cv3a[2.5-3.5)");
+  else if(cv3>=1.5 && cv3<4.0) flags.push("Cv3[1.5-4.0)");
+  if(autoVal>=4.0 && autoVal<4.5) flags.push("AUTO[4.0-4.5)");
+  if(snp<3.5) flags.push("Sniper<3.5");
   return flags;
 }
 
 function isCorrect(type, result){
   if(type === "?") return null;
   if(type === "Over 3.5 HT") return result >= 4;
-  if(type.startsWith("Over")) return result > parseFloat(type.match(/[\d.]+/)[0]);
   if(type.startsWith("Under")) return result < parseFloat(type.match(/[\d.]+/)[0]);
   return false;
 }
 
-// ====== SUPABASE OPERATIONS (używamy supabaseClient) ======
 async function loadAvailableMonths() {
-  try {
-    const { data, error } = await supabaseClient.from('matches').select('date').order('date', { ascending: false });
-    if(error) throw error;
-    availableMonths.clear();
-    data.forEach(m => { if(m.date) availableMonths.add(m.date.substring(0, 7)); });
-    renderMonthNav();
-    return availableMonths;
-  } catch(e) { console.error(e); return new Set(); }
+  const { data, error } = await supabaseClient.from('matches').select('date').order('date', { ascending: false });
+  if(error) throw error;
+  availableMonths.clear();
+  data.forEach(m => { if(m.date) availableMonths.add(m.date.substring(0, 7)); });
+  renderMonthNav();
 }
 
 async function loadMonthData(month, forceRefresh = false) {
   if(!forceRefresh && cachedData[month]) return cachedData[month];
-  try {
-    const startDate = `${month}-01`;
-    const endDate = `${month}-31`;
-    const { data, error } = await supabaseClient.from('matches').select('*').gte('date', startDate).lte('date', endDate).order('date', { ascending: false });
-    if(error) throw error;
-    cachedData[month] = data || [];
-    return cachedData[month];
-  } catch(e) { console.error(e); return []; }
+  const startDate = `${month}-01`;
+  const endDate = `${month}-31`;
+  const { data, error } = await supabaseClient.from('matches').select('*').gte('date', startDate).lte('date', endDate).order('date', { ascending: false });
+  if(error) throw error;
+  cachedData[month] = data || [];
+  return cachedData[month];
 }
 
 async function addMatchToSupabase(matchData) {
-  try {
-    const { error } = await supabaseClient.from('matches').insert([matchData]);
-    if(error) throw error;
-    const month = matchData.date.substring(0, 7);
-    cachedData[month] = null;
-    availableMonths.add(month);
-    showToast('✅ Dodano mecz');
-    return true;
-  } catch(e) { console.error(e); showToast('❌ Błąd dodawania: ' + e.message); return false; }
+  const { error } = await supabaseClient.from('matches').insert([matchData]);
+  if(error) throw error;
+  const month = matchData.date.substring(0, 7);
+  cachedData[month] = null;
+  availableMonths.add(month);
+  showToast('✅ Dodano');
+  return true;
 }
 
-async function updateMatchResult(id, result, verified) {
-  try {
-    const { error } = await supabaseClient.from('matches').update({ result, verified }).eq('id', id);
-    if(error) throw error;
-    Object.keys(cachedData).forEach(k => cachedData[k] = null);
-    showToast('✅ Zaktualizowano');
-    return true;
-  } catch(e) { console.error(e); showToast('❌ Błąd'); return false; }
+async function updateMatchResult(id, result) {
+  await supabaseClient.from('matches').update({ result, verified: true }).eq('id', id);
+  Object.keys(cachedData).forEach(k => cachedData[k] = null);
+  showToast('✅ Zaktualizowano');
 }
 
-async function deleteMatchFromDB(id) {
-  if(!confirm('Usunąć mecz?')) return false;
-  try {
-    const { error } = await supabaseClient.from('matches').delete().eq('id', id);
-    if(error) throw error;
-    Object.keys(cachedData).forEach(k => cachedData[k] = null);
-    showToast('✅ Usunięto');
-    return true;
-  } catch(e) { console.error(e); showToast('❌ Błąd'); return false; }
+async function deleteMatch(id) {
+  if(!confirm('Usunąć?')) return;
+  await supabaseClient.from('matches').delete().eq('id', id);
+  Object.keys(cachedData).forEach(k => cachedData[k] = null);
+  await renderMatches();
 }
 
-// ====== RENDER ======
 function formatMonth(month) {
-  const [year, m] = month.split('-');
   const months = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
-  return `${months[parseInt(m)-1]} ${year}`;
+  return `${months[parseInt(month.split('-')[1])-1]} ${month.split('-')[0]}`;
 }
 
 function renderMonthNav() {
   const nav = document.getElementById('monthNav');
-  const monthsArray = Array.from(availableMonths).sort().reverse();
-  if(monthsArray.length === 0) {
-    nav.innerHTML = '<div style="padding:10px">Brak danych. Dodaj pierwszy mecz lub zaimportuj JSON.</div>';
-    return;
-  }
-  nav.innerHTML = `<button class="month-btn ${currentMonth === 'all' ? 'active' : ''}" onclick="setCurrentMonth('all')">📊 Wszystkie miesiące</button>` +
-    monthsArray.map(m => `<button class="month-btn ${currentMonth === m ? 'active' : ''}" onclick="setCurrentMonth('${m}')">${formatMonth(m)} ${m === new Date().toISOString().substring(0,7) ? '⭐' : ''}</button>`).join('');
+  const months = Array.from(availableMonths).sort().reverse();
+  if(months.length === 0) { nav.innerHTML = '<div>Brak danych</div>'; return; }
+  nav.innerHTML = `<button class="month-btn ${currentMonth === 'all' ? 'active' : ''}" onclick="setCurrentMonth('all')">📊 Wszystkie</button>` + months.map(m => `<button class="month-btn ${currentMonth === m ? 'active' : ''}" onclick="setCurrentMonth('${m}')">${formatMonth(m)}</button>`).join('');
 }
 
 async function setCurrentMonth(month) {
@@ -398,10 +293,7 @@ async function setCurrentMonth(month) {
 
 async function renderMatches() {
   const container = document.getElementById('matchesTableContainer');
-  if(isLoading) return;
-  isLoading = true;
-  container.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spinner"></div> Ładowanie...</div>';
-  
+  container.innerHTML = '<div class="card"><div class="loading-spinner"></div> Ładowanie...</div>';
   try {
     if(currentMonth === 'all') {
       const months = Array.from(availableMonths).sort().reverse();
@@ -414,102 +306,77 @@ async function renderMatches() {
       const matches = await loadMonthData(currentMonth);
       container.innerHTML = '';
       container.appendChild(createMonthGroup(currentMonth, matches));
-      document.getElementById('currentMonthLabel').innerHTML = formatMonth(currentMonth);
     }
-    updateStatsFromAllData();
-  } catch(e) { console.error(e); container.innerHTML = '<div class="card">❌ Błąd ładowania</div>'; }
-  isLoading = false;
+    updateStats();
+  } catch(e) { container.innerHTML = '<div class="card">❌ Błąd</div>'; }
 }
 
 function createMonthGroup(month, matches) {
   const div = document.createElement('div');
   div.className = 'expandable-month';
-  const winRate = calculateWinRate(matches);
-  const isExpanded = (currentMonth === month || currentMonth === 'all');
   div.innerHTML = `
-    <div class="month-header" onclick="toggleMonthContent('${month}')">
-      <span>📅 ${formatMonth(month)} <span style="font-size:13px;color:var(--muted)">(${matches.length} meczów)</span>${winRate ? ` <span style="font-size:13px;color:var(--success)">🎯 ${winRate}%</span>` : ''}</span>
-      <span id="arrow-${month}">${isExpanded ? '▼' : '▶'}</span>
+    <div class="month-header" onclick="toggleMonth('${month}')">
+      <span>📅 ${formatMonth(month)} (${matches.length})</span>
+      <span id="arrow-${month}">▼</span>
     </div>
-    <div id="content-${month}" class="month-content" style="display:${isExpanded ? 'block' : 'none'}">
-      ${renderMatchesTable(matches)}
+    <div id="content-${month}" class="month-content">
+      ${renderTable(matches)}
     </div>
   `;
   return div;
 }
 
-function renderMatchesTable(matches) {
-  if(!matches.length) return '<p style="text-align:center">Brak meczów</p>';
-  return `<table style="width:100%;border-collapse:collapse"><thead><tr><th>Data</th><th style="text-align:left">Mecz</th><th>Typ</th><th>Cv3</th><th>Cv3a</th><th>Sniper</th><th>AUTO</th><th>Sygnał</th><th>Wynik</th><th></th></tr></thead><tbody>${matches.map(m => renderMatchRow(m)).join('')}</tbody></table>`;
+function renderTable(matches) {
+  if(!matches.length) return '<p>Brak</p>';
+  return `<table><thead><tr><th>Data</th><th>Mecz</th><th>Typ</th><th>Cv3</th><th>Cv3a</th><th>Snp</th><th>AUTO</th><th>Sygnał</th><th>Wynik</th><th></th></tr></thead><tbody>${matches.map(m => renderRow(m)).join('')}</tbody></table>`;
 }
 
-function renderMatchRow(m) {
-  const sig = getSignal(m.cornerv3 || 0, m.cornerv3a || 0, m.sniper || 0, m.auto_sniper || 0);
-  const flags = getFlag(m.cornerv3 || 0, m.cornerv3a || 0, m.sniper || 0, m.auto_sniper || 0);
-  let signalHtml = sig === 'under' ? '<span class="signal-badge signal-under">🔵 UNDER 5.5</span>' : (flags.length > 0 ? `<span class="signal-badge signal-flag">🟢 &lt;5.5</span><span class="flag-tooltip">${flags[0]}</span>` : '<span class="signal-badge signal-none">— brak</span>');
+function renderRow(m) {
+  const sig = getSignal(m.cornerv3||0, m.cornerv3a||0, m.sniper||0, m.auto_sniper||0);
+  const flags = getFlag(m.cornerv3||0, m.cornerv3a||0, m.sniper||0, m.auto_sniper||0);
+  let signalHtml = sig === 'under' ? '<span class="signal-badge signal-under">🔵 UNDER</span>' : (flags.length > 0 ? '<span class="signal-badge signal-flag">🟢 FLAGA</span>' : '<span class="signal-badge signal-none">—</span>');
   const isWin = m.verified && m.result ? isCorrect(m.type, m.result) : null;
   const rowClass = m.verified && m.result ? (isWin ? 'verified' : 'lost-row') : '';
-  return `<tr class="${rowClass}"><td>${m.date}</td><td style="text-align:left;font-weight:600">${m.match}</td><td>${m.type}</td><td>${m.cornerv3 || '?'}</td><td>${m.cornerv3a || '?'}</td><td>${m.sniper || '?'}</td><td>${m.auto_sniper || '?'}</td><td>${signalHtml}</td><td>${m.verified ? (m.result || '?') : `<input type="number" id="result-${m.id}" style="width:60px" placeholder="wynik">`}</td><td>${m.verified ? '✓' : `<button onclick="saveResultById(${m.id})">✓</button>`} <button onclick="deleteMatchById(${m.id})" style="background:#dc2626;color:#fff">🗑</button></td></tr>`;
+  return `<tr class="${rowClass}"><td>${m.date}</td><td style="text-align:left">${m.match}</td><td>${m.type}</td><td>${m.cornerv3||'?'}</td><td>${m.cornerv3a||'?'}</td><td>${m.sniper||'?'}</td><td>${m.auto_sniper||'?'}</td><td>${signalHtml}</td><td>${m.verified ? m.result : `<input type="number" id="res-${m.id}" style="width:60px"><button onclick="saveResult(${m.id})">✓</button>`}</td><td><button onclick="deleteMatch(${m.id})" style="background:#dc2626;color:#fff">🗑</button></td></tr>`;
 }
 
-function calculateWinRate(matches) {
-  const verified = matches.filter(m => m.verified && m.result && m.type !== '?');
-  if(verified.length === 0) return null;
-  const wins = verified.filter(m => isCorrect(m.type, m.result)).length;
-  return Math.round((wins / verified.length) * 100);
-}
-
-async function updateStatsFromAllData() {
-  let allMatches = [];
-  for(const month of availableMonths) {
-    const m = await loadMonthData(month);
-    allMatches.push(...m);
-  }
-  const verified = allMatches.filter(m => m.verified && m.result && m.type !== '?');
-  let underTotal=0, underWin=0, noneTotal=0, noneWin=0, flagTotal=0, flagWin=0;
-  verified.forEach(m => {
-    const sig = getSignal(m.cornerv3 || 0, m.cornerv3a || 0, m.sniper || 0, m.auto_sniper || 0);
-    const flags = getFlag(m.cornerv3 || 0, m.cornerv3a || 0, m.sniper || 0, m.auto_sniper || 0);
+async function updateStats() {
+  let all = [];
+  for(const m of availableMonths) all.push(...(await loadMonthData(m)));
+  const v = all.filter(m => m.verified && m.result && m.type !== '?');
+  let uTotal=0, uWin=0, nTotal=0, nWin=0, fTotal=0, fWin=0;
+  v.forEach(m => {
+    const sig = getSignal(m.cornerv3||0, m.cornerv3a||0, m.sniper||0, m.auto_sniper||0);
+    const f = getFlag(m.cornerv3||0, m.cornerv3a||0, m.sniper||0, m.auto_sniper||0);
     const win = isCorrect(m.type, m.result);
-    if(sig === 'under') { underTotal++; if(win) underWin++; }
-    else { noneTotal++; if(win) noneWin++; }
-    if(sig === 'none' && flags.length >= 2) { flagTotal++; if(win) flagWin++; }
+    if(sig === 'under') { uTotal++; if(win) uWin++; }
+    else { nTotal++; if(win) nWin++; }
+    if(sig === 'none' && f.length >= 2) { fTotal++; if(win) fWin++; }
   });
-  function fmt(win,total){ return total===0 ? {n:'—',pct:'brak danych'} : {n:`${win}/${total}`,pct:`${(win/total*100).toFixed(0)}% trafnych`}; }
-  const u = fmt(underWin, underTotal);
-  const fl = fmt(flagWin, flagTotal);
-  const n = fmt(noneWin, noneTotal);
-  document.getElementById('stat-under-n').innerHTML = u.n;
-  document.getElementById('stat-under-pct').innerHTML = u.pct;
-  document.getElementById('stat-flag-n').innerHTML = fl.n;
-  document.getElementById('stat-flag-pct').innerHTML = fl.pct;
-  document.getElementById('stat-none-n').innerHTML = n.n;
-  document.getElementById('stat-none-pct').innerHTML = n.pct;
+  document.getElementById('stat-under-n').innerHTML = uTotal ? `${uWin}/${uTotal}` : '—';
+  document.getElementById('stat-under-pct').innerHTML = uTotal ? `${(uWin/uTotal*100).toFixed(0)}%` : '—';
+  document.getElementById('stat-flag-n').innerHTML = fTotal ? `${fWin}/${fTotal}` : '—';
+  document.getElementById('stat-flag-pct').innerHTML = fTotal ? `${(fWin/fTotal*100).toFixed(0)}%` : '—';
+  document.getElementById('stat-none-n').innerHTML = nTotal ? `${nWin}/${nTotal}` : '—';
+  document.getElementById('stat-none-pct').innerHTML = nTotal ? `${(nWin/nTotal*100).toFixed(0)}%` : '—';
 }
 
-// ====== EVENTY ======
-window.toggleMonthContent = function(month) {
-  const content = document.getElementById(`content-${month}`);
-  const arrow = document.getElementById(`arrow-${month}`);
-  if(content.style.display === 'none') { content.style.display = 'block'; arrow.textContent = '▼'; }
-  else { content.style.display = 'none'; arrow.textContent = '▶'; }
+window.toggleMonth = function(month) {
+  const c = document.getElementById(`content-${month}`);
+  const a = document.getElementById(`arrow-${month}`);
+  if(c.style.display === 'none') { c.style.display = 'block'; a.textContent = '▼'; }
+  else { c.style.display = 'none'; a.textContent = '▶'; }
 }
 
-window.saveResultById = async function(id) {
-  const input = document.getElementById(`result-${id}`);
-  const result = parseFloat(input.value);
-  if(isNaN(result)) return;
-  await updateMatchResult(id, result, true);
+window.saveResult = async function(id) {
+  const val = parseFloat(document.getElementById(`res-${id}`).value);
+  if(isNaN(val)) return;
+  await updateMatchResult(id, val);
   await renderMatches();
 }
 
-window.deleteMatchById = async function(id) {
-  await deleteMatchFromDB(id);
-  await loadAvailableMonths();
-  await renderMatches();
-}
+window.deleteMatch = deleteMatch;
 
-// ====== ADD MATCH ======
 async function addMatch() {
   const matchData = {
     date: document.getElementById('date').value,
@@ -521,116 +388,241 @@ async function addMatch() {
     auto_sniper: round(parseFloat(document.getElementById('auto').value)) || null,
     verified: false
   };
-  if(!matchData.date || !matchData.match) { showToast('❌ Wypełnij datę i mecz'); return; }
+  if(!matchData.date || !matchData.match) { showToast('❌ Wypełnij formularz'); return; }
   await addMatchToSupabase(matchData);
   document.getElementById('match').value = '';
   document.getElementById('cornerv3').value = '';
   document.getElementById('cornerv3a').value = '';
   document.getElementById('sniper').value = '';
   document.getElementById('auto').value = '';
-  document.getElementById('live-signal').innerHTML = '';
   await loadAvailableMonths();
   await renderMatches();
 }
 
-// ====== LIVE SIGNAL ======
 function updateLiveSignal(){
   const cv3 = parseFloat(document.getElementById('cornerv3').value);
   const cv3a = parseFloat(document.getElementById('cornerv3a').value);
-  const snp = parseFloat(document.getElementById('sniper').value);
-  const aval = parseFloat(document.getElementById('auto').value);
-  if([cv3,cv3a,snp,aval].some(isNaN)){ document.getElementById("live-signal").innerHTML = ""; return; }
-  const sig = getSignal(cv3, cv3a, snp, aval);
-  const flags = getFlag(cv3, cv3a, snp, aval);
-  let html = "";
-  if(sig==="under") html = `<span class="signal-badge signal-under">🔵 UNDER 5.5</span> <span style="font-size:12px;color:#1d4ed8">Cv3=${cv3}<4 | Cv3a=${cv3a}<4 | AUTO=${aval}<5.5</span>`;
-  else if(flags.length>0) html = `<span class="signal-badge signal-flag">🟢 &lt;5.5</span><span class="flag-tooltip">${flags.join(' + ')}</span>`;
-  else html = '<span class="signal-badge signal-none">— brak sygnału</span>';
-  document.getElementById("live-signal").innerHTML = html;
+  const a = parseFloat(document.getElementById('auto').value);
+  if([cv3,cv3a,a].some(isNaN)){ document.getElementById('live-signal').innerHTML = ''; return; }
+  if(cv3 < 4.0 && cv3a < 4.0 && a < 5.5) document.getElementById('live-signal').innerHTML = '<span class="signal-badge signal-under">🔵 UNDER 5.5 - TYPUJ!</span>';
+  else document.getElementById('live-signal').innerHTML = '<span class="signal-badge signal-none">— brak sygnału</span>';
 }
-document.getElementById('cornerv3')?.addEventListener("input", updateLiveSignal);
-document.getElementById('cornerv3a')?.addEventListener("input", updateLiveSignal);
-document.getElementById('sniper')?.addEventListener("input", updateLiveSignal);
-document.getElementById('auto')?.addEventListener("input", updateLiveSignal);
 
-// ====== IMPORT FUNCTIONS ======
-window.loadSource = function(source, input){ showToast(`📁 Załadowano ${source}`); }
+document.getElementById('cornerv3')?.addEventListener('input', updateLiveSignal);
+document.getElementById('cornerv3a')?.addEventListener('input', updateLiveSignal);
+document.getElementById('auto')?.addEventListener('input', updateLiveSignal);
+
+window.loadSource = function(source, input){
+  const f = input.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const raw = JSON.parse(e.target.result);
+      if(source==='cv3' || source==='cv3a'){
+        imp[source] = {};
+        if(Array.isArray(raw)){
+          raw.forEach(m => {
+            const key = fixEnc(m.home_name) + ' vs ' + fixEnc(m.away_name);
+            imp[source][key] = round(m.avg_potential || 0);
+          });
+        }
+        document.getElementById('box-'+source).classList.add('loaded');
+        document.getElementById('label-'+source).textContent = (source==='cv3'?'Cornerv3':'Cornerv3a') + ` ✓ (${Object.keys(imp[source]).length})`;
+      } else if(source==='auto'){
+        if(Array.isArray(raw) && raw[0]?.models){
+          imp.auto = {};
+          raw.forEach(m => {
+            const key = m.title || (fixEnc(m.home) + ' vs ' + fixEnc(m.away));
+            const model = m.models.find(x => x.name.includes('ROŻNE HT'));
+            if(model){
+              const log = model.logs.find(l => l[0]==='A1');
+              if(log) imp.auto[key] = round(log[3]);
+            }
+          });
+          document.getElementById('box-auto').classList.add('loaded');
+          document.getElementById('label-auto').textContent = `AUTO ✓ (${Object.keys(imp.auto).length})`;
+        }
+      } else if(source==='sniper'){
+        imp.sniper = {};
+        if(Array.isArray(raw) && raw[0]?.expected !== undefined){
+          raw.forEach(m => {
+            const key = fixEnc(m.home) + ' vs ' + fixEnc(m.away);
+            imp.sniper[key] = m.expected;
+          });
+        }
+        document.getElementById('box-sniper').classList.add('loaded');
+        document.getElementById('label-sniper').textContent = `Sniper ✓ (${Object.keys(imp.sniper).length})`;
+      }
+      mergeAndRender();
+    } catch(err){ alert('Błąd: '+err.message); }
+  };
+  reader.readAsText(f);
+}
+
 window.loadResults = function(input){ showToast('✅ Wyniki załadowane'); }
-window.filterImport = function(filter, btn){ currentFilter=filter; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
-window.toggleAll = function(chk){ document.querySelectorAll('.icheckbox').forEach(c=>c.checked=chk.checked); }
-window.selectBySig = function(){ document.querySelectorAll('.icheckbox').forEach((c,i)=>{ if(importedMatches[i]?._sig!=='none') c.checked=true; }); updateImportCount(); }
-window.addSelected = function(){ showToast('✅ Dodano do bazy Supabase'); }
-function updateImportCount(){}
-function renderImportTable(){}
 
-// ====== JSON OPERATIONS ======
+function mergeAndRender(){
+  const allTitles = new Set([...Object.keys(imp.cv3 || {}), ...Object.keys(imp.auto || {})]);
+  const today = new Date().toISOString().split('T')[0];
+  importedMatches = [];
+  allTitles.forEach(title => {
+    const cv3 = imp.cv3[title] || null;
+    const cv3a = imp.cv3a[title] || null;
+    const snp = imp.sniper[title] || null;
+    const auto = imp.auto[title] || null;
+    if(cv3 === null && auto === null) return;
+    const sig = getSignal(cv3||0, cv3a||0, snp||0, auto||0);
+    const flags = getFlag(cv3||0, cv3a||0, snp||0, auto||0);
+    let defaultType = (sig === 'under' || flags.length >= 2) ? 'Under 5.5 HT' : '?';
+    importedMatches.push({ date: today, match: title, type: defaultType, p: { Cornerv3: cv3||0, Cornerv3a: cv3a||0, Sniper: snp||0, AUTO: auto||0 }, _sig: sig, _flags: flags });
+  });
+  renderImportTable();
+}
+
+function renderImportTable(){
+  const preview = document.getElementById('import-preview');
+  const btn = document.getElementById('btn-add-all');
+  if(importedMatches.length === 0){ preview.style.display = 'none'; btn.disabled = true; return; }
+  preview.style.display = 'block';
+  const tbody = document.getElementById('import-tbody');
+  tbody.innerHTML = '';
+  importedMatches.forEach((m, i) => {
+    const sigKey = m._sig !== 'none' ? m._sig : (m._flags.length > 0 ? 'flag' : 'none');
+    if(currentFilter !== 'all' && currentFilter !== sigKey) return;
+    let badge = m._sig === 'under' ? '<span style="color:#60a5fa">🔵 UNDER</span>' : (m._flags.length > 0 ? '<span style="color:#4ade80">🟢 FLAGA</span>' : '<span style="color:#475569">—</span>');
+    const defaultType = (m._sig === 'under' || m._flags.length >= 2) ? 'Under 5.5 HT' : '?';
+    const tr = document.createElement('tr');
+    tr.dataset.sig = sigKey;
+    tr.innerHTML = `<td><input type="checkbox" class="icheckbox" id="chk-${i}" onchange="onRowCheck(${i},this)" ${defaultType !== '?' ? 'checked' : ''}></td>
+      <td class="match-name">${m.match}</td><td>${m.p.Cornerv3||'?'}</td><td>${m.p.Cornerv3a||'?'}</td><td>${m.p.Sniper||'?'}</td><td>${m.p.AUTO||'?'}</td>
+      <td>${badge}</td>
+      <td><select class="itype-select" id="itype-${i}" onchange="importedMatches[${i}].type=this.value" ${defaultType === '?' ? 'disabled' : ''}>
+        <option value="Under 5.5 HT" ${defaultType === 'Under 5.5 HT' ? 'selected' : ''}>Under 5.5 HT</option>
+        <option value="?" ${defaultType === '?' ? 'selected' : ''}>?</option>
+      </select></td>`;
+    tbody.appendChild(tr);
+    importedMatches[i].type = defaultType;
+  });
+  updateImportCount();
+}
+
+window.onRowCheck = function(i, chk){
+  const sel = document.getElementById(`itype-${i}`);
+  if(chk.checked){
+    sel.disabled = false;
+    if(importedMatches[i].type === '?') importedMatches[i].type = 'Under 5.5 HT';
+    sel.value = importedMatches[i].type;
+  } else {
+    sel.disabled = true;
+    importedMatches[i].type = '?';
+  }
+  updateImportCount();
+}
+
+window.toggleAll = function(chk){
+  document.querySelectorAll('.icheckbox').forEach((c, i) => { c.checked = chk.checked; onRowCheck(i, c); });
+}
+
+window.filterImport = function(filter, btn){
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#import-tbody tr').forEach(row => {
+    row.style.display = (filter === 'all' || row.dataset.sig === filter) ? '' : 'none';
+  });
+}
+
+window.selectBySig = function(){
+  importedMatches.forEach((m, i) => {
+    const chk = document.getElementById(`chk-${i}`);
+    if(chk && (m._sig !== 'none' || m._flags.length > 0)) chk.checked = true;
+  });
+  updateImportCount();
+}
+
+function updateImportCount(){
+  const checked = document.querySelectorAll('.icheckbox:checked').length;
+  document.getElementById('btn-add-all').disabled = checked === 0;
+}
+
+window.addSelected = async function(){
+  let added = 0;
+  for(let i = 0; i < importedMatches.length; i++){
+    const chk = document.getElementById(`chk-${i}`);
+    if(!chk || !chk.checked) continue;
+    const m = importedMatches[i];
+    await addMatchToSupabase({
+      date: m.date, match: m.match, type: m.type,
+      cornerv3: m.p.Cornerv3, cornerv3a: m.p.Cornerv3a,
+      sniper: m.p.Sniper, auto_sniper: m.p.AUTO,
+      verified: false
+    });
+    added++;
+  }
+  showToast(`✅ Dodano ${added} meczów`);
+  await loadAvailableMonths();
+  await renderMatches();
+}
+
 function exportJSON(){
   (async()=>{
-    let all=[];
-    for(const m of availableMonths){
-      const data = await loadMonthData(m);
-      all.push(...data);
-    }
-    const blob = new Blob([JSON.stringify(all,null,2)],{type:"application/json"});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download=`matches_${new Date().toISOString().split('T')[0]}.json`;
+    let all = [];
+    for(const m of availableMonths) all.push(...(await loadMonthData(m)));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(all,null,2)], {type:'application/json'}));
+    a.download = `matches_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     showToast(`📥 Eksportowano ${all.length} meczów`);
   })();
 }
 
 const jsonInput = document.getElementById('jsonInput');
-jsonInput.onchange = e=>{
-  const r=new FileReader();
-  r.onload=async ev=>{
-    const imported=JSON.parse(ev.target.result);
-    for(const match of imported){
-      await addMatchToSupabase(match);
-    }
+jsonInput.onchange = e => {
+  const r = new FileReader();
+  r.onload = async ev => {
+    const imported = JSON.parse(ev.target.result);
+    for(const match of imported) await addMatchToSupabase(match);
     await loadAvailableMonths();
     await renderMatches();
-    showToast(`✅ Zaimportowano ${imported.length} meczów`);
+    showToast(`✅ Importowano ${imported.length} meczów`);
   };
   r.readAsText(e.target.files[0]);
 };
 
-function recalculate(){ showToast('✅ Przeliczono'); renderMatches(); }
 function exportTodayTXT(){
   const today = new Date().toISOString().split('T')[0];
   showToast(`📄 Eksportowano mecze z ${today}`);
 }
 
 async function clearAll(){
-  if(confirm('Usunąć WSZYSTKIE dane z Supabase?')){
-    const {error} = await supabaseClient.from('matches').delete().neq('id',0);
-    if(error) showToast('❌ Błąd');
-    else { cachedData={}; availableMonths.clear(); await loadAvailableMonths(); await renderMatches(); showToast('✅ Wyczyszczono'); }
+  if(confirm('Usunąć WSZYSTKIE dane?')){
+    await supabaseClient.from('matches').delete().neq('id',0);
+    cachedData = {};
+    availableMonths.clear();
+    await loadAvailableMonths();
+    await renderMatches();
+    showToast('✅ Wyczyszczono');
   }
 }
 
-async function syncWithCloud(){ await loadAvailableMonths(); await renderMatches(); showToast('✅ Zsynchronizowano'); }
+async function syncWithCloud(){
+  await loadAvailableMonths();
+  await renderMatches();
+  showToast('✅ Zsynchronizowano');
+}
+
 function exportToJSON(){ exportJSON(); }
 function importFromJSON(){ jsonInput.click(); }
 
-// ====== INICJALIZACJA ======
 document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
 (async function init(){
-  document.getElementById('syncStatus').innerHTML = '☁️ Połączono z Supabase';
+  document.getElementById('syncStatus').innerHTML = '☁️ Połączono';
   document.getElementById('syncStatus').className = 'sync-status online';
   await loadAvailableMonths();
   await renderMatches();
 })();
-
-window.setCurrentMonth = setCurrentMonth;
-window.addMatch = addMatch;
-window.syncWithCloud = syncWithCloud;
-window.exportToJSON = exportToJSON;
-window.importFromJSON = importFromJSON;
-window.clearAll = clearAll;
-window.exportJSON = exportJSON;
-window.recalculate = recalculate;
-window.exportTodayTXT = exportTodayTXT;</script>
+</script>
 </body>
 </html>
