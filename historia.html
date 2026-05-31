@@ -242,12 +242,24 @@ async function loadAvailableMonths() {
 
 async function loadMonthData(month, forceRefresh = false) {
   if(!forceRefresh && cachedData[month]) return cachedData[month];
-  const startDate = `${month}-01`;
-  const endDate = `${month}-31`;
-  const { data, error } = await supabaseClient.from('matches').select('*').gte('date', startDate).lte('date', endDate).order('date', { ascending: false });
-  if(error) throw error;
-  cachedData[month] = data || [];
-  return cachedData[month];
+  try {
+    // Oblicz ostatni dzień miesiąca
+    const [year, monthNum] = month.split('-');
+    const lastDay = new Date(year, monthNum, 0).getDate();
+    const startDate = `${month}-01`;
+    const endDate = `${month}-${lastDay}`;
+    
+    const { data, error } = await supabaseClient
+      .from('matches')
+      .select('*')
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: false });
+      
+    if(error) throw error;
+    cachedData[month] = data || [];
+    return cachedData[month];
+  } catch(e) { console.error(e); return []; }
 }
 
 async function addMatchToSupabase(matchData) {
