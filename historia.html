@@ -601,15 +601,50 @@ function exportJSON(){
 
 const jsonInput = document.getElementById('jsonInput');
 jsonInput.onchange = e => {
-  const r = new FileReader();
-  r.onload = async ev => {
-    const imported = JSON.parse(ev.target.result);
-    for(const match of imported) await addMatchToSupabase(match);
-    await loadAvailableMonths();
-    await renderMatches();
-    showToast(`✅ Importowano ${imported.length} meczów`);
-  };
-  r.readAsText(e.target.files[0]);
+    const r = new FileReader();
+    r.onload = async ev => {
+        const imported = JSON.parse(ev.target.result);
+        let added = 0;
+        let skipped = 0;
+        
+        for(const match of imported) {
+            // Sprawdź czy już istnieje
+            const { data: existing } = await supabaseClient
+                .from('matches')
+                .select('id')
+                .eq('date', match.date)
+                .eq('match', match.match)
+                .maybeSingle();
+            
+            if(existing) {
+                skipped++;
+                continue;
+            }
+            
+            const dbMatch = {
+                date: match.date,
+                match: match.match,
+                type: match.type,
+                cornerv3: match.p?.Cornerv3 || null,
+                cornerv3a: match.p?.Cornerv3a || null,
+                sniper: match.p?.Sniper || null,
+                auto_sniper: match.p?.AUTO || null,
+                result: match.r || null,
+                verified: match.verified || false,
+                diff: match.diff || null,
+                pts: match.pts || null
+            };
+            
+            const { error } = await supabaseClient.from('matches').insert([dbMatch]);
+            if(error) console.error('Błąd:', error);
+            else added++;
+        }
+        
+        showToast(`✅ Dodano ${added} meczów, pominięto ${skipped} duplikatów`);
+        await loadAvailableMonths();
+        await renderMatches();
+    };
+    r.readAsText(e.target.files[0]);
 };
 
 function exportTodayTXT(){
