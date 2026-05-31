@@ -547,22 +547,44 @@ function updateImportCount(){
 }
 
 window.addSelected = async function(){
-  let added = 0;
-  for(let i = 0; i < importedMatches.length; i++){
-    const chk = document.getElementById(`chk-${i}`);
-    if(!chk || !chk.checked) continue;
-    const m = importedMatches[i];
-    await addMatchToSupabase({
-      date: m.date, match: m.match, type: m.type,
-      cornerv3: m.p.Cornerv3, cornerv3a: m.p.Cornerv3a,
-      sniper: m.p.Sniper, auto_sniper: m.p.AUTO,
-      verified: false
-    });
-    added++;
-  }
-  showToast(`✅ Dodano ${added} meczów`);
-  await loadAvailableMonths();
-  await renderMatches();
+    const existing = new Set();
+    // Pobierz istniejące mecze z bazy
+    const { data: existingMatches } = await supabaseClient.from('matches').select('date, match');
+    existingMatches?.forEach(m => existing.add(`${m.date}|${m.match}`));
+    
+    let added = 0, skipped = 0;
+    
+    for(let i = 0; i < importedMatches.length; i++){
+        const chk = document.getElementById('chk-'+i);
+        if(!chk || !chk.checked) continue;
+        
+        const m = importedMatches[i];
+        const key = `${m.date}|${m.match}`;
+        
+        if(existing.has(key)){
+            skipped++;
+            continue;
+        }
+        
+        const matchData = {
+            date: m.date,
+            match: m.match,
+            type: m.type,
+            cornerv3: m.p.Cornerv3,
+            cornerv3a: m.p.Cornerv3a,
+            sniper: m.p.Sniper,
+            auto_sniper: m.p.AUTO,
+            verified: false
+        };
+        
+        const { error } = await supabaseClient.from('matches').insert([matchData]);
+        if(error) console.error('Błąd:', error);
+        else added++;
+    }
+    
+    showToast(`✅ Dodano ${added} meczów${skipped ? `, pominięto ${skipped} duplikatów` : ''}`);
+    await loadAvailableMonths();
+    await renderMatches();
 }
 
 function exportJSON(){
