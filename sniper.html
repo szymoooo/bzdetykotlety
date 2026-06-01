@@ -7,16 +7,17 @@
 <style>
     body { background: #0b0c10; color: #c5c6c7; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
     .container { max-width: 1600px; margin: 0 auto; }
-    h1 { text-align: center; color: #66fcf1; margin-bottom: 10px; }
     .update-info { text-align: center; color: #666; margin-bottom: 40px; font-size: 0.9em; }
     .section { margin-bottom: 50px; }
     .section-title { font-size: 1.5em; font-weight: bold; color: #45a29e; margin-bottom: 20px; border-bottom: 2px solid #1f2833; padding-bottom: 10px; }
-    .todays-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 20px; }
-    .today-match { background: #1f2833; border-radius: 10px; padding: 20px; border-left: 5px solid #45a29e; }
+    .todays-grid, .yesterday-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 20px; }
+    .today-match, .yesterday-match { background: #1f2833; border-radius: 10px; padding: 20px; border-left: 5px solid #45a29e; }
+    .yesterday-match { border-left-color: #f0ad4e; }
     .match-time { font-size: 1.2em; font-weight: bold; color: #66fcf1; margin-bottom: 10px; }
     .match-league { color: #888; font-size: 0.85em; margin-bottom: 5px; }
     .match-teams { font-size: 1.3em; font-weight: bold; color: #fff; margin-bottom: 10px; }
     .match-prediction { color: #aaa; margin-bottom: 10px; }
+    .match-result { color: #f0ad4e; }
     .national-badge { display: inline-block; background: rgba(102,252,241,0.1); color: #66fcf1; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; margin-bottom: 5px; }
     .flag-badge { margin-top: 15px; padding: 10px 15px; border-radius: 8px; font-weight: bold; text-align: center; }
     .flag-badge.green { background: rgba(102,252,241,0.15); color: #66fcf1; border: 2px solid #66fcf1; }
@@ -62,6 +63,17 @@
     #teamSearch { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #45a29e; background: #1f2833; color: white; font-size: 1em; }
     .logo-container { text-align: center; margin-bottom: 12px; }
     .logo { max-width: 100%; width: 100%; height: auto; }
+    .download-btn {
+        background: #45a29e;
+        color: #0b0c10;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 20px;
+    }
+    .download-btn:hover { background: #66fcf1; }
 </style>
 </head>
 <body>
@@ -70,7 +82,10 @@
     <div class="update-info">Ostatnia aktualizacja: 2026-06-01 10:15:40 | Łącznie meczów: 4765 | Unique patterns: 1628 | 🌍 Mecze reprezentacji: 2281</div>
     
     <div class="section">
-        <div class="section-title">⚡ DZISIEJSZE MECZE (8)</div>
+        <div class="section-title">
+            ⚡ DZISIEJSZE MECZE (8)
+            <button class="download-btn" onclick="downloadJSON('today')">📥 Pobierz JSON</button>
+        </div>
         <div class="todays-grid">
                 <div class="today-match">
                     <div class="match-time">20:00</div>
@@ -247,87 +262,359 @@
     </div>
     
     <div class="section">
+        <div class="section-title">
+            📆 WCZORAJSZE WYNIKI (33)
+            <button class="download-btn" onclick="downloadJSON('yesterday')">📥 Pobierz JSON</button>
+        </div>
+        <div class="yesterday-grid">
+                <div class="yesterday-match">
+                    <div class="match-time">18:30</div>
+                    <div class="match-details">
+                        <div class="match-league">Belgium Pro League</div>
+                        <div class="match-teams">KAA Gent vs KRC Genk</div>
+                        <div class="match-result">Rzuty rożne: <strong>3</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">21:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Brazil Serie A</div>
+                        <div class="match-teams">Palmeiras vs Chapecoense</div>
+                        <div class="match-result">Rzuty rożne: <strong>1</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">21:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Brazil Serie A</div>
+                        <div class="match-teams">Vasco da Gama vs Atlético Mineiro</div>
+                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">01:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Brazil Serie A</div>
+                        <div class="match-teams">Santos vs Vitória</div>
+                        <div class="match-result">Rzuty rożne: <strong>1</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">16:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Brazil Serie A</div>
+                        <div class="match-teams">Bragantino vs Internacional</div>
+                        <div class="match-result">Rzuty rożne: <strong>2</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">13:35</div>
+                    <div class="match-details">
+                        <div class="match-league">China Chinese Super League</div>
+                        <div class="match-teams">Wuhan Three Towns vs Yunnan Yukun</div>
+                        <div class="match-result">Rzuty rożne: <strong>8</strong> → over 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">13:00</div>
+                    <div class="match-details">
+                        <div class="match-league">China Chinese Super League</div>
+                        <div class="match-teams">Tianjin Teda vs Dalian Zhixing</div>
+                        <div class="match-result">Rzuty rożne: <strong>9</strong> → over 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">15:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Finland Veikkausliiga</div>
+                        <div class="match-teams">Oulu vs Jaro</div>
+                        <div class="match-result">Rzuty rożne: <strong>2</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">20:45</div>
+                    <div class="match-details">
+                        <div class="match-league">Poland 1. Liga</div>
+                        <div class="match-teams">Wieczysta Kraków vs Chrobry Głogów</div>
+                        <div class="match-result">Rzuty rożne: <strong>6</strong> → over 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">21:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Spain Segunda División</div>
+                        <div class="match-teams">Córdoba vs SD Huesca</div>
+                        <div class="match-result">Rzuty rożne: <strong>6</strong> → over 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">18:30</div>
+                    <div class="match-details">
+                        <div class="match-league">Spain Segunda División</div>
+                        <div class="match-teams">Racing Santander vs Cádiz</div>
+                        <div class="match-result">Rzuty rożne: <strong>4</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">18:30</div>
+                    <div class="match-details">
+                        <div class="match-league">Spain Segunda División</div>
+                        <div class="match-teams">Almería vs Real Valladolid</div>
+                        <div class="match-result">Rzuty rożne: <strong>-1</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">18:30</div>
+                    <div class="match-details">
+                        <div class="match-league">Spain Segunda División</div>
+                        <div class="match-teams">Deportivo La Coruña vs UD Las Palmas</div>
+                        <div class="match-result">Rzuty rożne: <strong>4</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">18:30</div>
+                    <div class="match-details">
+                        <div class="match-league">Spain Segunda División</div>
+                        <div class="match-teams">Real Zaragoza vs Málaga CF</div>
+                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">18:30</div>
+                    <div class="match-details">
+                        <div class="match-league">Spain Segunda División</div>
+                        <div class="match-teams">Burgos CF vs FC Andorra</div>
+                        <div class="match-result">Rzuty rożne: <strong>-1</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">14:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Sweden Allsvenskan</div>
+                        <div class="match-teams">Degerfors vs Brommapojkarna</div>
+                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">14:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Sweden Allsvenskan</div>
+                        <div class="match-teams">Häcken vs Hammarby</div>
+                        <div class="match-result">Rzuty rożne: <strong>4</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">14:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Sweden Allsvenskan</div>
+                        <div class="match-teams">Västerås SK vs IFK Göteborg</div>
+                        <div class="match-result">Rzuty rożne: <strong>4</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">15:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Uruguay Primera División</div>
+                        <div class="match-teams">Albion vs Torque</div>
+                        <div class="match-result">Rzuty rożne: <strong>6</strong> → over 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">20:00</div>
+                    <div class="match-details">
+                        <div class="match-league">Uruguay Primera División</div>
+                        <div class="match-teams">Juventud vs Wanderers</div>
+                        <div class="match-result">Rzuty rożne: <strong>2</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">23:30</div>
+                    <div class="match-details">
+                        <div class="match-league">Uruguay Primera División</div>
+                        <div class="match-teams">Deportivo Maldonado vs Nacional</div>
+                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">20:45</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Germany vs Finland</div>
+                        <div class="match-result">Rzuty rożne: <strong>7</strong> → over 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">21:30</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">USMNT vs Senegal</div>
+                        <div class="match-result">Rzuty rożne: <strong>4</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">04:00</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Mexico vs Australia</div>
+                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">15:00</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Switzerland vs Jordan</div>
+                        <div class="match-result">Rzuty rożne: <strong>4</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">23:30</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Brazil vs Panama</div>
+                        <div class="match-result">Rzuty rożne: <strong>1</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">12:25</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Japan vs Iceland</div>
+                        <div class="match-result">Rzuty rożne: <strong>1</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">02:00</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Ecuador vs Saudi Arabia</div>
+                        <div class="match-result">Rzuty rożne: <strong>0</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">17:00</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Cape Verde Islands vs Serbia</div>
+                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">13:30</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Singapore vs Mongolia</div>
+                        <div class="match-result">Rzuty rożne: <strong>2</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">16:00</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Czech Republic vs Kosovo</div>
+                        <div class="match-result">Rzuty rożne: <strong>2</strong> → under 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">03:00</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">South Korea vs Trinidad and Tobago</div>
+                        <div class="match-result">Rzuty rożne: <strong>6</strong> → over 5.5</div>
+                    </div>
+                </div>
+                <div class="yesterday-match">
+                    <div class="match-time">17:30</div>
+                    <div class="match-details">
+                        <div class="match-league">International - Friendlies 2026</div>
+                        <div class="match-teams">Poland vs Ukraine</div>
+                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
+                    </div>
+                </div></div>
+    </div>
+    
+    <div class="section">
         <div class="section-title">🟢 ZIELONE FLAGI - Win Rate ≥70% (min. 2 mecze)</div>
         <div class="flags-grid">
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">95/2.32</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-03-19 - Olympique Lyonnais vs Celta de Vigo → 2</li><li>✅ 2026-02-17 - Alianza Petrolera vs Cúcuta Deportivo → 2</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">95/3.15</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-09 - Barracas Central vs Gimnasia La Plata → 4</li><li>✅ 2026-04-26 - Newell's Old Boys vs Instituto → 2</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/3.11</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-01-03 - AVS vs Moreirense FC → 4</li><li>✅ 2026-02-02 - AVS vs Sporting Braga → 3</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/3.38</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>3 WIN</span> | <span>0 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">3 WIN | 0 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-15 - Napoli vs Roma → 1</li><li>✅ 2026-05-14 - Charlotte vs New York City → 5</li><li>✅ 2026-05-17 - Jeju United vs Anyang → 3</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/3.42</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-19 - Shkendija vs Samsunspor → 2</li><li>✅ 2026-04-02 - América de Cali vs Atlético Bucaramanga → 4</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/3.54</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-03-22 - Atlanta United FC vs DC United → 4</li><li>✅ 2026-02-25 - Gimnasia La Plata vs Rosario Central → 2</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/2.94</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-04-26 - Nashville SC vs Charlotte → 4</li><li>✅ 2026-03-22 - Belgrano vs Racing Club → 3</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/2.76</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-04-18 - Instituto vs Estudiantes → 5</li><li>✅ 2026-05-13 - Anyang vs Sangju Sangmu → 1</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/3.04</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-05-03 - Rosario Central vs Tigre → 5</li><li>✅ 2026-02-14 - América de Cali vs Santa Fe → 4</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">90/2.69</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-03-01 - Deportivo Pasto vs Cúcuta Deportivo → 5</li><li>✅ 2026-03-31 - Morocco vs Paraguay → 1</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.59</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-01-03 - Como vs Udinese → 2</li><li>✅ 2026-02-02 - Udinese vs Roma → 5</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.75</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-01-03 - Estrela Amadora vs Sporting Braga → 5</li><li>✅ 2026-04-03 - Gimnasia Mendoza vs Vélez Sarsfield → 2</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.56</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-01-19 - Lazio vs Como → 1</li><li>✅ 2026-05-04 - Gimnasia Mendoza vs Defensa y Justicia → 3</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.72</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>3 WIN</span> | <span>0 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">3 WIN | 0 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-01-31 - Napoli vs Fiorentina → 5</li><li>✅ 2026-03-13 - Torino vs Parma → 4</li><li>✅ 2026-04-08 - Sporting Braga vs Real Betis → 3</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.81</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-15 - Udinese vs Sassuolo → 5</li><li>✅ 2026-03-08 - Raków Częstochowa vs Pogoń Szczecin → 4</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.57</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>3 WIN</span> | <span>0 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">3 WIN | 0 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-15 - Mirandés vs UD Las Palmas → 2</li><li>✅ 2026-02-28 - Granada CF vs Málaga CF → 3</li><li>✅ 2026-03-27 - Austria vs Ghana → 4</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.70</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>3 WIN</span> | <span>0 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">3 WIN | 0 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-16 - Real Sociedad II vs Málaga CF → 4</li><li>✅ 2026-04-12 - Charlotte vs Nashville SC → 0</li><li>✅ 2026-04-16 - Real Betis vs Sporting Braga → 3</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.12</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-19 - Omonia Nicosia vs Rijeka → 3</li><li>✅ 2026-03-31 - Real Valladolid vs Cádiz → 5</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.76</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>2 WIN</span> | <span>0 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">2 WIN | 0 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-19 - Zrinjski vs Crystal Palace → 0</li><li>✅ 2026-04-06 - Udinese vs Como → 3</li></ul></div></div>
                 <div class="flag-card green">
                     <div class="flag-header"><span class="pattern">85/3.99</span><span class="win-rate">100.0%</span></div>
-                    <div class="flag-stats"><span>3 WIN</span> | <span>0 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">3 WIN | 0 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>✅ 2026-02-22 - Genoa vs Torino → 2</li><li>✅ 2026-04-05 - Charlotte vs Philadelphia Union → 5</li><li>✅ 2026-04-05 - DC United vs FC Dallas → 2</li></ul></div></div></div>
     </div>
     
@@ -336,83 +623,83 @@
         <div class="flags-grid">
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">5/5.42</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-02-25 - Remo vs Internacional → 10</li><li>❌ 2026-05-08 - KuPS vs SJK → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">25/5.97</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>3 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">0 WIN | 3 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-01-25 - Groningen vs Fortuna Sittard → 11</li><li>❌ 2026-03-07 - Górnik Łęczna vs Wieczysta Kraków → 9</li><li>❌ 2026-05-24 - Odra Opole vs Polonia Warszawa → 9</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">25/6.23</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-01-25 - Real Zaragoza vs CD Castellón → 10</li><li>❌ 2026-04-11 - Groningen vs Go Ahead Eagles → 8</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">25/5.22</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-02-08 - Groningen vs PSV → 9</li><li>❌ 2026-05-02 - Derby County vs Sheffield United → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">25/5.93</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-03-12 - Bologna vs Roma → 7</li><li>❌ 2026-04-18 - Toronto vs Austin → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">25/5.95</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-03-14 - Stal Rzeszów vs Górnik Łęczna → 8</li><li>❌ 2026-04-06 - St. Gallen vs Zürich → 10</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">30/5.76</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-01-30 - Bari 1908 vs Palermo → 8</li><li>❌ 2026-02-15 - OB vs Midtjylland → 7</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">35/5.89</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-01-11 - Sparta Rotterdam vs Heracles → 6</li><li>❌ 2026-05-17 - Miedź Legnica vs Ruch Chorzów → 7</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">35/5.11</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>3 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">0 WIN | 3 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-01-04 - Rio Ave FC vs Casa Pia → 8</li><li>❌ 2026-02-01 - Real Madrid vs Rayo Vallecano → 6</li><li>❌ 2026-03-08 - Grasshopper vs Lausanne Sport → 8</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">35/5.84</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-02-06 - Odra Opole vs Pogoń Siedlce → 7</li><li>❌ 2026-03-22 - Stal Mielec vs Wieczysta Kraków → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">35/5.75</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-02-27 - Telstar vs NAC Breda → 6</li><li>❌ 2026-05-02 - CD Nacional vs AVS → 8</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">35/5.47</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>3 LOSS</span> | <span>3 Total</span></div>
+                    <div class="flag-stats">0 WIN | 3 LOSS | 3 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-04-11 - Sint-Truiden vs Club Brugge → 8</li><li>❌ 2026-05-10 - Wisła Płock vs Motor Lublin → 7</li><li>❌ 2026-05-16 - Lillestrøm vs Sandefjord → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">35/5.71</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-05-03 - KV Mechelen vs KAA Gent → 6</li><li>❌ 2026-05-24 - Flamengo vs Palmeiras → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">40/5.62</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-01-30 - Antalyaspor vs Trabzonspor → 6</li><li>❌ 2026-02-17 - Galatasaray vs Juventus → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">40/5.65</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-02-25 - Juventus vs Galatasaray → 7</li><li>❌ 2026-04-19 - Pogoń Grod. Mazowiecki vs Pogoń Siedlce → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">45/4.71</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-02-27 - Fortuna Düsseldorf vs Bochum → 9</li><li>❌ 2026-04-22 - Elche CF vs Atlético Madrid → 8</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">45/4.64</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>4 LOSS</span> | <span>4 Total</span></div>
+                    <div class="flag-stats">0 WIN | 4 LOSS | 4 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-02-28 - Holstein Kiel vs Elversberg → 6</li><li>❌ 2026-03-15 - St. Mirren vs Rangers → 8</li><li>❌ 2026-04-10 - Frosinone vs Palermo → 7</li><li>❌ 2026-04-25 - Augsburg vs Eintracht Frankfurt → 6</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">45/4.51</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-04-25 - Catanzaro vs Spezia → 7</li><li>❌ 2026-05-03 - Hibernian vs Celtic → 7</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">45/5.07</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-05-09 - Sunderland vs Manchester United → 8</li><li>❌ 2026-02-23 - Brøndby vs SønderjyskE → 7</li></ul></div></div>
                 <div class="flag-card red">
                     <div class="flag-header"><span class="pattern">55/4.37</span><span class="win-rate">0.0%</span></div>
-                    <div class="flag-stats"><span>0 WIN</span> | <span>2 LOSS</span> | <span>2 Total</span></div>
+                    <div class="flag-stats">0 WIN | 2 LOSS | 2 Total</div>
                     <div class="flag-examples">Przykłady:<ul><li>❌ 2026-01-01 - Southampton vs Millwall → 6</li><li>❌ 2026-02-21 - Stoke City vs Leicester City → 7</li></ul></div></div></div>
     </div>
     
@@ -425,6 +712,808 @@
 </div>
 
 <script>
+    // Dane JSON osadzone bezpośrednio w HTML
+    const todayData = [
+  {
+    "time": "20:00",
+    "league": "Uruguay Primera División",
+    "home": "Boston River",
+    "away": "Liverpool FC Montevideo",
+    "score": 85,
+    "expected": 3.54,
+    "pattern": "85/3.54",
+    "flag": {
+      "type": "green",
+      "wins": 4,
+      "losses": 1,
+      "win_rate": 80.0
+    },
+    "history": {
+      "wins": 4,
+      "losses": 1,
+      "total": 5,
+      "win_rate": 80.0,
+      "examples": [
+        {
+          "match_id": 8235340,
+          "date": "2026-05-24",
+          "league": "Spain Segunda",
+          "home": "Cultural y Deportiva Leonesa",
+          "away": "Burgos CF",
+          "score": 85,
+          "expected": 3.54,
+          "actual": 3,
+          "result": "win"
+        },
+        {
+          "match_id": 8419166,
+          "date": "2026-02-13",
+          "league": "Argentina Primera División",
+          "home": "Argentinos Juniors",
+          "away": "River Plate",
+          "score": 85,
+          "expected": 3.54,
+          "actual": 1,
+          "result": "win"
+        },
+        {
+          "match_id": 8432083,
+          "date": "2026-05-03",
+          "league": "Colombia Categoria Primera A",
+          "home": "Santa Fe",
+          "away": "La Equidad",
+          "score": 85,
+          "expected": 3.54,
+          "actual": 2,
+          "result": "win"
+        },
+        {
+          "match_id": 8390998,
+          "date": "2026-05-10",
+          "league": "USA MLS",
+          "home": "New England Revolution",
+          "away": "Philadelphia Union",
+          "score": 85,
+          "expected": 3.54,
+          "actual": 8,
+          "result": "loss"
+        }
+      ]
+    },
+    "is_national": false,
+    "home_stats": {
+      "matches": 17,
+      "avg_for": 1,
+      "avg_against": 2.764705882352941,
+      "avg_for_last5": 1.6,
+      "avg_against_last5": 2.4,
+      "std_for": 1.3228756555322954
+    },
+    "away_stats": {
+      "matches": 17,
+      "avg_for": 1.6470588235294117,
+      "avg_against": 1.8235294117647058,
+      "avg_for_last5": 0.4,
+      "avg_against_last5": 2,
+      "std_for": 1.3666188418222285
+    }
+  },
+  {
+    "time": "20:45",
+    "league": "International - Friendlies 2026",
+    "home": "Austria",
+    "away": "Tunisia",
+    "score": 75,
+    "expected": 4.37,
+    "pattern": "75/4.37",
+    "flag": {
+      "type": "green",
+      "wins": 3,
+      "losses": 1,
+      "win_rate": 75.0
+    },
+    "history": {
+      "wins": 3,
+      "losses": 1,
+      "total": 4,
+      "win_rate": 75.0,
+      "examples": [
+        {
+          "match_id": 8173410,
+          "date": "2026-03-07",
+          "league": "Italy Serie B",
+          "home": "Avellino",
+          "away": "Calcio Padova",
+          "score": 75,
+          "expected": 4.37,
+          "actual": 3,
+          "result": "win"
+        },
+        {
+          "match_id": 8227826,
+          "date": "2026-04-25",
+          "league": "Germany Bundesliga",
+          "home": "Mainz 05",
+          "away": "Bayern München",
+          "score": 75,
+          "expected": 4.37,
+          "actual": 4,
+          "result": "win"
+        },
+        {
+          "match_id": 8409497,
+          "date": "2026-05-03",
+          "league": "Brazil Serie A",
+          "home": "Chapecoense",
+          "away": "Bragantino",
+          "score": 75,
+          "expected": 4.37,
+          "actual": 1,
+          "result": "win"
+        },
+        {
+          "match_id": 8405676,
+          "date": "2026-02-22",
+          "league": "Mexico Liga MX",
+          "home": "Tijuana",
+          "away": "Mazatlán",
+          "score": 75,
+          "expected": 4.37,
+          "actual": 7,
+          "result": "loss"
+        }
+      ]
+    },
+    "is_national": true,
+    "home_stats": {
+      "matches": 24,
+      "avg_for": 2.125,
+      "avg_against": 1.4166666666666667,
+      "avg_for_last5": 1.4,
+      "avg_against_last5": 2,
+      "std_for": 1.7523276445668041
+    },
+    "away_stats": {
+      "matches": 21,
+      "avg_for": 1.5238095238095237,
+      "avg_against": 1.9523809523809523,
+      "avg_for_last5": 1.8,
+      "avg_against_last5": 4,
+      "std_for": 1.3645163106041502
+    }
+  },
+  {
+    "time": "19:00",
+    "league": "International - Friendlies 2026",
+    "home": "Norway",
+    "away": "Sweden",
+    "score": 25,
+    "expected": 5.43,
+    "pattern": "25/5.43",
+    "flag": null,
+    "history": {
+      "wins": 4,
+      "losses": 2,
+      "total": 6,
+      "win_rate": 66.66666666666666,
+      "examples": [
+        {
+          "match_id": 8007650,
+          "date": "2026-04-11",
+          "league": "Netherlands Eredivisie",
+          "home": "Sparta Rotterdam",
+          "away": "PSV",
+          "score": 25,
+          "expected": 5.43,
+          "actual": 5,
+          "result": "win"
+        },
+        {
+          "match_id": 7933413,
+          "date": "2026-04-18",
+          "league": "Poland 1. Liga",
+          "home": "Śląsk Wrocław",
+          "away": "Znicz Pruszków",
+          "score": 25,
+          "expected": 5.43,
+          "actual": 5,
+          "result": "win"
+        },
+        {
+          "match_id": 8007424,
+          "date": "2026-04-25",
+          "league": "Netherlands Eredivisie",
+          "home": "Heerenveen",
+          "away": "Fortuna Sittard",
+          "score": 25,
+          "expected": 5.43,
+          "actual": 3,
+          "result": "win"
+        },
+        {
+          "match_id": 8007466,
+          "date": "2026-02-17",
+          "league": "Netherlands Eredivisie",
+          "home": "Sparta Rotterdam",
+          "away": "NEC",
+          "score": 25,
+          "expected": 5.43,
+          "actual": 6,
+          "result": "loss"
+        },
+        {
+          "match_id": 8202267,
+          "date": "2026-04-22",
+          "league": "England Championship",
+          "home": "Birmingham City",
+          "away": "Preston North End",
+          "score": 25,
+          "expected": 5.43,
+          "actual": 6,
+          "result": "loss"
+        }
+      ]
+    },
+    "is_national": true,
+    "home_stats": {
+      "matches": 20,
+      "avg_for": 2.95,
+      "avg_against": 1.25,
+      "avg_for_last5": 2.8,
+      "avg_against_last5": 2,
+      "std_for": 2.0641042405337657
+    },
+    "away_stats": {
+      "matches": 20,
+      "avg_for": 3.35,
+      "avg_against": 2.1,
+      "avg_for_last5": 4,
+      "avg_against_last5": 2,
+      "std_for": 2.058998223459779
+    }
+  },
+  {
+    "time": "18:00",
+    "league": "International - Friendlies 2026",
+    "home": "Bulgaria",
+    "away": "Montenegro",
+    "score": 65,
+    "expected": 4.49,
+    "pattern": "65/4.49",
+    "flag": {
+      "type": "green",
+      "wins": 4,
+      "losses": 0,
+      "win_rate": 100.0
+    },
+    "history": {
+      "wins": 4,
+      "losses": 0,
+      "total": 4,
+      "win_rate": 100.0,
+      "examples": [
+        {
+          "match_id": 8173455,
+          "date": "2026-03-07",
+          "league": "Italy Serie B",
+          "home": "Venezia",
+          "away": "Reggiana",
+          "score": 65,
+          "expected": 4.49,
+          "actual": 3,
+          "result": "win"
+        },
+        {
+          "match_id": 8231973,
+          "date": "2026-05-17",
+          "league": "Turkey Super Lig",
+          "home": "Antalyaspor",
+          "away": "Kocaelispor",
+          "score": 65,
+          "expected": 4.49,
+          "actual": 3,
+          "result": "win"
+        },
+        {
+          "match_id": 8411891,
+          "date": "2026-05-29",
+          "league": "Norway Eliteserien",
+          "home": "Vålerenga",
+          "away": "Kristiansund",
+          "score": 65,
+          "expected": 4.49,
+          "actual": 3,
+          "result": "win"
+        }
+      ]
+    },
+    "is_national": true,
+    "home_stats": {
+      "matches": 20,
+      "avg_for": 1.1,
+      "avg_against": 2.8,
+      "avg_for_last5": 1.6,
+      "avg_against_last5": 2.6,
+      "std_for": 1.1192102478745307
+    },
+    "away_stats": {
+      "matches": 20,
+      "avg_for": 2.5,
+      "avg_against": 2.4,
+      "avg_for_last5": 2.4,
+      "avg_against_last5": 1.8,
+      "std_for": 1.3954814298487213
+    }
+  },
+  {
+    "time": "18:00",
+    "league": "International - Friendlies 2026",
+    "home": "Slovakia",
+    "away": "Malta",
+    "score": 90,
+    "expected": 3.04,
+    "pattern": "90/3.04",
+    "flag": {
+      "type": "green",
+      "wins": 2,
+      "losses": 0,
+      "win_rate": 100.0
+    },
+    "history": {
+      "wins": 2,
+      "losses": 0,
+      "total": 2,
+      "win_rate": 100.0,
+      "examples": [
+        {
+          "match_id": 8419301,
+          "date": "2026-05-03",
+          "league": "Argentina Primera División",
+          "home": "Rosario Central",
+          "away": "Tigre",
+          "score": 90,
+          "expected": 3.04,
+          "actual": 5,
+          "result": "win"
+        },
+        {
+          "match_id": 8432156,
+          "date": "2026-02-14",
+          "league": "Colombia Categoria Primera A",
+          "home": "América de Cali",
+          "away": "Santa Fe",
+          "score": 90,
+          "expected": 3.04,
+          "actual": 4,
+          "result": "win"
+        }
+      ]
+    },
+    "is_national": true,
+    "home_stats": {
+      "matches": 24,
+      "avg_for": 1.9583333333333333,
+      "avg_against": 1.7083333333333333,
+      "avg_for_last5": 1.6,
+      "avg_against_last5": 0.8,
+      "std_for": 1.7062332443303205
+    },
+    "away_stats": {
+      "matches": 19,
+      "avg_for": 1.2105263157894737,
+      "avg_against": 1.7894736842105263,
+      "avg_for_last5": 1.8,
+      "avg_against_last5": 1,
+      "std_for": 1.4367767695018308
+    }
+  },
+  {
+    "time": "19:30",
+    "league": "International - Friendlies 2026",
+    "home": "Turkey",
+    "away": "FYR Macedonia",
+    "score": 70,
+    "expected": 3.95,
+    "pattern": "70/3.95",
+    "flag": null,
+    "history": {
+      "wins": 1,
+      "losses": 0,
+      "total": 1,
+      "win_rate": 100.0,
+      "examples": [
+        {
+          "match_id": 8419111,
+          "date": "2026-04-24",
+          "league": "Argentina Primera División",
+          "home": "Defensa y Justicia",
+          "away": "Boca Juniors",
+          "score": 70,
+          "expected": 3.95,
+          "actual": 1,
+          "result": "win"
+        }
+      ]
+    },
+    "is_national": true,
+    "home_stats": {
+      "matches": 25,
+      "avg_for": 2.84,
+      "avg_against": 1.68,
+      "avg_for_last5": 2.4,
+      "avg_against_last5": 1.2,
+      "std_for": 1.7483325389257807
+    },
+    "away_stats": {
+      "matches": 21,
+      "avg_for": 1.9047619047619047,
+      "avg_against": 2.761904761904762,
+      "avg_for_last5": 1,
+      "avg_against_last5": 1.8,
+      "std_for": 1.374945886381057
+    }
+  },
+  {
+    "time": "13:00",
+    "league": "International - Friendlies 2026",
+    "home": "Pakistan",
+    "away": "Bangladesh",
+    "score": 85,
+    "expected": 0.5,
+    "pattern": "85/0.50",
+    "flag": null,
+    "history": null,
+    "is_national": true,
+    "home_stats": {
+      "matches": 2,
+      "avg_for": -1,
+      "avg_against": -1,
+      "avg_for_last5": -1,
+      "avg_against_last5": -1,
+      "std_for": 0.0
+    },
+    "away_stats": {
+      "matches": 9,
+      "avg_for": 1.1111111111111112,
+      "avg_against": 1.7777777777777777,
+      "avg_for_last5": 1.2,
+      "avg_against_last5": 1.8,
+      "std_for": 2.260776661041756
+    }
+  },
+  {
+    "time": "18:00",
+    "league": "International - Friendlies 2026",
+    "home": "Maldives",
+    "away": "Afghanistan",
+    "score": 70,
+    "expected": 2.62,
+    "pattern": "70/2.62",
+    "flag": null,
+    "history": {
+      "wins": 0,
+      "losses": 1,
+      "total": 1,
+      "win_rate": 0.0,
+      "examples": [
+        {
+          "match_id": 8432062,
+          "date": "2026-02-07",
+          "league": "Colombia Categoria Primera A",
+          "home": "Independiente Medellín",
+          "away": "La Equidad",
+          "score": 70,
+          "expected": 2.62,
+          "actual": 6,
+          "result": "loss"
+        }
+      ]
+    },
+    "is_national": true,
+    "home_stats": {
+      "matches": 5,
+      "avg_for": 2,
+      "avg_against": 2.4,
+      "avg_for_last5": 2,
+      "avg_against_last5": 2.4,
+      "std_for": 2.5495097567963922
+    },
+    "away_stats": {
+      "matches": 5,
+      "avg_for": 0.4,
+      "avg_against": 0.2,
+      "avg_for_last5": 0.4,
+      "avg_against_last5": 0.2,
+      "std_for": 1.51657508881031
+    }
+  }
+];
+    const yesterdayData = [
+  {
+    "time": "18:30",
+    "league": "Belgium Pro League",
+    "home": "KAA Gent",
+    "away": "KRC Genk",
+    "actual_corners": 3,
+    "result": "under 5.5"
+  },
+  {
+    "time": "21:00",
+    "league": "Brazil Serie A",
+    "home": "Palmeiras",
+    "away": "Chapecoense",
+    "actual_corners": 1,
+    "result": "under 5.5"
+  },
+  {
+    "time": "21:00",
+    "league": "Brazil Serie A",
+    "home": "Vasco da Gama",
+    "away": "Atlético Mineiro",
+    "actual_corners": 5,
+    "result": "under 5.5"
+  },
+  {
+    "time": "01:00",
+    "league": "Brazil Serie A",
+    "home": "Santos",
+    "away": "Vitória",
+    "actual_corners": 1,
+    "result": "under 5.5"
+  },
+  {
+    "time": "16:00",
+    "league": "Brazil Serie A",
+    "home": "Bragantino",
+    "away": "Internacional",
+    "actual_corners": 2,
+    "result": "under 5.5"
+  },
+  {
+    "time": "13:35",
+    "league": "China Chinese Super League",
+    "home": "Wuhan Three Towns",
+    "away": "Yunnan Yukun",
+    "actual_corners": 8,
+    "result": "over 5.5"
+  },
+  {
+    "time": "13:00",
+    "league": "China Chinese Super League",
+    "home": "Tianjin Teda",
+    "away": "Dalian Zhixing",
+    "actual_corners": 9,
+    "result": "over 5.5"
+  },
+  {
+    "time": "15:00",
+    "league": "Finland Veikkausliiga",
+    "home": "Oulu",
+    "away": "Jaro",
+    "actual_corners": 2,
+    "result": "under 5.5"
+  },
+  {
+    "time": "20:45",
+    "league": "Poland 1. Liga",
+    "home": "Wieczysta Kraków",
+    "away": "Chrobry Głogów",
+    "actual_corners": 6,
+    "result": "over 5.5"
+  },
+  {
+    "time": "21:00",
+    "league": "Spain Segunda División",
+    "home": "Córdoba",
+    "away": "SD Huesca",
+    "actual_corners": 6,
+    "result": "over 5.5"
+  },
+  {
+    "time": "18:30",
+    "league": "Spain Segunda División",
+    "home": "Racing Santander",
+    "away": "Cádiz",
+    "actual_corners": 4,
+    "result": "under 5.5"
+  },
+  {
+    "time": "18:30",
+    "league": "Spain Segunda División",
+    "home": "Almería",
+    "away": "Real Valladolid",
+    "actual_corners": -1,
+    "result": "under 5.5"
+  },
+  {
+    "time": "18:30",
+    "league": "Spain Segunda División",
+    "home": "Deportivo La Coruña",
+    "away": "UD Las Palmas",
+    "actual_corners": 4,
+    "result": "under 5.5"
+  },
+  {
+    "time": "18:30",
+    "league": "Spain Segunda División",
+    "home": "Real Zaragoza",
+    "away": "Málaga CF",
+    "actual_corners": 5,
+    "result": "under 5.5"
+  },
+  {
+    "time": "18:30",
+    "league": "Spain Segunda División",
+    "home": "Burgos CF",
+    "away": "FC Andorra",
+    "actual_corners": -1,
+    "result": "under 5.5"
+  },
+  {
+    "time": "14:00",
+    "league": "Sweden Allsvenskan",
+    "home": "Degerfors",
+    "away": "Brommapojkarna",
+    "actual_corners": 5,
+    "result": "under 5.5"
+  },
+  {
+    "time": "14:00",
+    "league": "Sweden Allsvenskan",
+    "home": "Häcken",
+    "away": "Hammarby",
+    "actual_corners": 4,
+    "result": "under 5.5"
+  },
+  {
+    "time": "14:00",
+    "league": "Sweden Allsvenskan",
+    "home": "Västerås SK",
+    "away": "IFK Göteborg",
+    "actual_corners": 4,
+    "result": "under 5.5"
+  },
+  {
+    "time": "15:00",
+    "league": "Uruguay Primera División",
+    "home": "Albion",
+    "away": "Torque",
+    "actual_corners": 6,
+    "result": "over 5.5"
+  },
+  {
+    "time": "20:00",
+    "league": "Uruguay Primera División",
+    "home": "Juventud",
+    "away": "Wanderers",
+    "actual_corners": 2,
+    "result": "under 5.5"
+  },
+  {
+    "time": "23:30",
+    "league": "Uruguay Primera División",
+    "home": "Deportivo Maldonado",
+    "away": "Nacional",
+    "actual_corners": 5,
+    "result": "under 5.5"
+  },
+  {
+    "time": "20:45",
+    "league": "International - Friendlies 2026",
+    "home": "Germany",
+    "away": "Finland",
+    "actual_corners": 7,
+    "result": "over 5.5"
+  },
+  {
+    "time": "21:30",
+    "league": "International - Friendlies 2026",
+    "home": "USMNT",
+    "away": "Senegal",
+    "actual_corners": 4,
+    "result": "under 5.5"
+  },
+  {
+    "time": "04:00",
+    "league": "International - Friendlies 2026",
+    "home": "Mexico",
+    "away": "Australia",
+    "actual_corners": 5,
+    "result": "under 5.5"
+  },
+  {
+    "time": "15:00",
+    "league": "International - Friendlies 2026",
+    "home": "Switzerland",
+    "away": "Jordan",
+    "actual_corners": 4,
+    "result": "under 5.5"
+  },
+  {
+    "time": "23:30",
+    "league": "International - Friendlies 2026",
+    "home": "Brazil",
+    "away": "Panama",
+    "actual_corners": 1,
+    "result": "under 5.5"
+  },
+  {
+    "time": "12:25",
+    "league": "International - Friendlies 2026",
+    "home": "Japan",
+    "away": "Iceland",
+    "actual_corners": 1,
+    "result": "under 5.5"
+  },
+  {
+    "time": "02:00",
+    "league": "International - Friendlies 2026",
+    "home": "Ecuador",
+    "away": "Saudi Arabia",
+    "actual_corners": 0,
+    "result": "under 5.5"
+  },
+  {
+    "time": "17:00",
+    "league": "International - Friendlies 2026",
+    "home": "Cape Verde Islands",
+    "away": "Serbia",
+    "actual_corners": 5,
+    "result": "under 5.5"
+  },
+  {
+    "time": "13:30",
+    "league": "International - Friendlies 2026",
+    "home": "Singapore",
+    "away": "Mongolia",
+    "actual_corners": 2,
+    "result": "under 5.5"
+  },
+  {
+    "time": "16:00",
+    "league": "International - Friendlies 2026",
+    "home": "Czech Republic",
+    "away": "Kosovo",
+    "actual_corners": 2,
+    "result": "under 5.5"
+  },
+  {
+    "time": "03:00",
+    "league": "International - Friendlies 2026",
+    "home": "South Korea",
+    "away": "Trinidad and Tobago",
+    "actual_corners": 6,
+    "result": "over 5.5"
+  },
+  {
+    "time": "17:30",
+    "league": "International - Friendlies 2026",
+    "home": "Poland",
+    "away": "Ukraine",
+    "actual_corners": 5,
+    "result": "under 5.5"
+  }
+];
+
+    function downloadJSON(type) {
+        let data, filename;
+        if (type === 'today') {
+            data = todayData;
+            filename = 'today_matches.json';
+        } else if (type === 'yesterday') {
+            data = yesterdayData;
+            filename = 'yesterday_results.json';
+        } else return;
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
     function filterTeams() {
         const input = document.getElementById('teamSearch');
         const filter = input.value.toUpperCase();
@@ -443,6 +1532,7 @@
             allRows.forEach(row => row.style.display = "");
         }
     }
+
     function showPage(pageNum) {
         const pages = document.querySelectorAll('.page-content');
         const buttons = document.querySelectorAll('.pagination button');
