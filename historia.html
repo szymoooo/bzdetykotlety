@@ -472,7 +472,42 @@ window.loadSource = function(source, input){
   reader.readAsText(f);
 }
 
-window.loadResults = function(input){ showToast('✅ Wyniki załadowane'); }
+window.loadResults = async function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const results = JSON.parse(e.target.result);
+      let updated = 0;
+      let notFound = 0;
+      for (const res of results) {
+        const home = fixEnc(res.home) || '';
+        const away = fixEnc(res.away) || '';
+        const matchName = `${home} vs ${away}`;
+        const { data: matches, error } = await supabaseClient
+          .from('matches')
+          .select('id')
+          .eq('match', matchName)
+          .eq('verified', false);
+        if (error) { console.error('Błąd zapytania:', error); continue; }
+        if (!matches || matches.length === 0) { notFound++; continue; }
+        for (const m of matches) {
+          const { error: updateError } = await supabaseClient
+            .from('matches')
+            .update({ result: res.actual_corners, verified: true })
+            .eq('id', m.id);
+          if (!updateError) updated++;
+        }
+      }
+      Object.keys(cachedData).forEach(k => cachedData[k] = null);
+      await loadAvailableMonths();
+      await renderMatches();
+      showToast(`✅ Zaktualizowano ${updated} meczów${notFound ? `, nie znaleziono ${notFound}` : ''}`);
+    } catch (err) { showToast('❌ Błąd pliku: ' + err.message); }
+  };
+  reader.readAsText(file);
+};
 
 function mergeAndRender(){
   const allTitles = new Set([...Object.keys(imp.cv3 || {}), ...Object.keys(imp.auto || {})]);
