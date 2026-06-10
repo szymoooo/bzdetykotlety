@@ -481,7 +481,13 @@ window.loadResults = async function(input) {
       const results = JSON.parse(e.target.result);
       let updated = 0;
       let notFound = 0;
+      let skipped = 0;   // licznik pominiętych -1
       for (const res of results) {
+        // Pomiń, jeśli brak danych
+        if (res.actual_corners === -1) {
+          skipped++;
+          continue;
+        }
         const home = fixEnc(res.home) || '';
         const away = fixEnc(res.away) || '';
         const matchName = `${home} vs ${away}`;
@@ -503,7 +509,11 @@ window.loadResults = async function(input) {
       Object.keys(cachedData).forEach(k => cachedData[k] = null);
       await loadAvailableMonths();
       await renderMatches();
-      showToast(`✅ Zaktualizowano ${updated} meczów${notFound ? `, nie znaleziono ${notFound}` : ''}`);
+      showToast(
+        `✅ Zaktualizowano ${updated} meczów` +
+        `${notFound ? `, nie znaleziono ${notFound}` : ''}` +
+        `${skipped ? `, pominięto ${skipped} (brak danych)` : ''}`
+      );
     } catch (err) { showToast('❌ Błąd pliku: ' + err.message); }
   };
   reader.readAsText(file);
