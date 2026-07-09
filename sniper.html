@@ -83,42 +83,36 @@
     
     <div class="section">
         <div class="section-title">
-            ⚡ DZISIEJSZE MECZE (0)
+            ⚡ DZISIEJSZE MECZE (1)
             <button class="download-btn" onclick="downloadJSON('today')">📥 Pobierz JSON</button>
         </div>
-        <p style='text-align:center; color:#666'>Brak meczów na dziś</p>
+        <div class="todays-grid">
+                <div class="today-match">
+                    <div class="match-time">22:00</div>
+                    <div class="match-details">
+                        <div class="match-league">International - World Cup</div>
+                        <div class="national-badge">🌍 Reprezentacja</div>
+                        <div class="match-teams">France vs Morocco</div>
+                        <div class="match-prediction">Pattern: <strong>75/3.44</strong> | Expected: 3.44 | Score: 75</div>
+                        
+                    <div class="team-stats">
+                        <div class="team-stats-grid">
+                            <div class="team-stat"><strong>France</strong><br>Meczy: 26<br>Śr. rożne: 3.12<br>Śr. przeciw: 1.27</div>
+                            <div class="team-stat"><strong>Morocco</strong><br>Meczy: 29<br>Śr. rożne: 2.10<br>Śr. przeciw: 0.90</div>
+                        </div>
+                    </div>
+                        
+                        
+                    </div>
+                </div></div>
     </div>
     
     <div class="section">
         <div class="section-title">
-            📆 WCZORAJSZE WYNIKI (3)
+            📆 WCZORAJSZE WYNIKI (0)
             <button class="download-btn" onclick="downloadJSON('yesterday')">📥 Pobierz JSON</button>
         </div>
-        <div class="yesterday-grid">
-                <div class="yesterday-match">
-                    <div class="match-time">02:00</div>
-                    <div class="match-details">
-                        <div class="match-league">International - World Cup</div>
-                        <div class="match-teams">USMNT vs Belgium</div>
-                        <div class="match-result">Rzuty rożne: <strong>4</strong> → under 5.5</div>
-                    </div>
-                </div>
-                <div class="yesterday-match">
-                    <div class="match-time">18:00</div>
-                    <div class="match-details">
-                        <div class="match-league">International - World Cup</div>
-                        <div class="match-teams">Argentina vs Egypt</div>
-                        <div class="match-result">Rzuty rożne: <strong>2</strong> → under 5.5</div>
-                    </div>
-                </div>
-                <div class="yesterday-match">
-                    <div class="match-time">22:00</div>
-                    <div class="match-details">
-                        <div class="match-league">International - World Cup</div>
-                        <div class="match-teams">Switzerland vs Colombia</div>
-                        <div class="match-result">Rzuty rożne: <strong>5</strong> → under 5.5</div>
-                    </div>
-                </div></div>
+        <p style='text-align:center; color:#666'>Brak wczorajszych meczów</p>
     </div>
     
     <div class="section">
@@ -301,33 +295,37 @@
 
 <script>
     // Dane JSON osadzone bezpośrednio w HTML
-    const todayData = [];
-    const yesterdayData = [
-  {
-    "time": "02:00",
-    "league": "International - World Cup",
-    "home": "USMNT",
-    "away": "Belgium",
-    "actual_corners": 4,
-    "result": "under 5.5"
-  },
-  {
-    "time": "18:00",
-    "league": "International - World Cup",
-    "home": "Argentina",
-    "away": "Egypt",
-    "actual_corners": 2,
-    "result": "under 5.5"
-  },
+    const todayData = [
   {
     "time": "22:00",
     "league": "International - World Cup",
-    "home": "Switzerland",
-    "away": "Colombia",
-    "actual_corners": 5,
-    "result": "under 5.5"
+    "home": "France",
+    "away": "Morocco",
+    "score": 75,
+    "expected": 3.44,
+    "pattern": "75/3.44",
+    "flag": null,
+    "history": null,
+    "is_national": true,
+    "home_stats": {
+      "matches": 26,
+      "avg_for": 3.1153846153846154,
+      "avg_against": 1.2692307692307692,
+      "avg_for_last5": 2.8,
+      "avg_against_last5": 0.6,
+      "std_for": 1.9251373577368047
+    },
+    "away_stats": {
+      "matches": 29,
+      "avg_for": 2.103448275862069,
+      "avg_against": 0.896551724137931,
+      "avg_for_last5": 1.4,
+      "avg_against_last5": 1.2,
+      "std_for": 2.2415687680443623
+    }
   }
 ];
+    const yesterdayData = [];
 
     function downloadJSON(type) {
         let data, filename;
