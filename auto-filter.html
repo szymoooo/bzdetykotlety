@@ -156,13 +156,30 @@
       justify-content: space-between;
       align-items: center;
     }
-    .history-item .date { color: #888; font-size: 12px; }
+    .history-item .details {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+    .history-item .details .detail {
+      color: #bbb;
+      font-size: 13px;
+    }
+    .history-item .details .detail strong { color: #eee; }
+    .history-item .date {
+      color: #888;
+      font-size: 12px;
+      margin-left: 16px;
+    }
     .win { color: #4caf50; font-weight: bold; }
     .lose { color: #ef5350; font-weight: bold; }
 
     @media (max-width: 600px) {
       .toolbar button { width: 100%; }
       .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+      .history-item { flex-direction: column; align-items: flex-start; }
+      .history-item .date { margin-left: 0; margin-top: 4px; }
     }
   </style>
 </head>
@@ -272,6 +289,18 @@
     return match.tytul + '|' + match.u55;
   }
 
+  // ===== FORMATOWANIE DATY =====
+  function formatDate(date) {
+    const d = new Date(date);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const sec = String(d.getSeconds()).padStart(2, '0');
+    return `${dd}.${mm}.${yyyy}, ${hh}:${min}:${sec}`;
+  }
+
   // ===== GŁÓWNA FUNKCJA =====
   async function fetchAndDisplay() {
     const container = document.getElementById('kafelkiContainer');
@@ -301,15 +330,16 @@
         let htmlOut = '';
         aktywne.forEach((m, idx) => {
           const key = getMatchKey(m);
+          const scoreHighsJSON = JSON.stringify(m.scoreHighs);
           htmlOut += `
-            <div class="kafelek" data-key="${key}">
+            <div class="kafelek" data-key="${key}" data-scorehighs='${scoreHighsJSON}'>
               <div class="title">${m.tytul}</div>
               <div class="detail"><strong>U5.5:</strong> ${m.u55}</div>
               ${m.scoreHighs.map(s => `<div class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</div>`).join('')}
               <div class="detail"><span class="status-pending">PENDING</span></div>
               <div class="input-group">
                 <input type="number" id="corners_${idx}" min="0" step="1" placeholder="Rzuty rożne HT" style="width:100px;">
-                <button onclick="saveResult('${key}', '${m.tytul}', ${idx})">Zapisz</button>
+                <button onclick="saveResult('${key}', ${idx})">Zapisz</button>
               </div>
             </div>
           `;
@@ -327,7 +357,7 @@
   }
 
   // ===== ZAPIS WYNIKU =====
-  function saveResult(key, tytul, idx) {
+  function saveResult(key, idx) {
     const input = document.getElementById(`corners_${idx}`);
     if (!input) return;
     const val = parseInt(input.value);
@@ -342,6 +372,17 @@
       return;
     }
 
+    // Pobieramy dane punktowe z atrybutu data-scorehighs
+    let scoreHighs = [];
+    try {
+      const raw = kafelek.dataset.scorehighs;
+      if (raw) scoreHighs = JSON.parse(raw);
+    } catch(e) {}
+
+    // Wyciągamy tytuł z kafelka
+    const titleEl = kafelek.querySelector('.title');
+    const tytul = titleEl ? titleEl.textContent : 'Nieznany mecz';
+
     const status = val >= 4 ? 'WYGRANY' : 'PRZEGRANY';
 
     const history = getHistory();
@@ -350,6 +391,7 @@
       tytul: tytul,
       corners: val,
       status: status,
+      scoreHighs: scoreHighs,
       date: new Date().toISOString()
     });
     saveHistory(history);
@@ -409,13 +451,23 @@
     let html = '';
     sorted.forEach(h => {
       const statusClass = h.status === 'WYGRANY' ? 'win' : 'lose';
-      const dateStr = new Date(h.date).toLocaleString();
+      const dateStr = formatDate(h.date);
+      // Budujemy szczegóły punktowe
+      let detailsHtml = '';
+      if (h.scoreHighs && h.scoreHighs.length) {
+        detailsHtml = h.scoreHighs.map(s => 
+          `<span class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</span>`
+        ).join('');
+      }
       html += `
         <div class="history-item">
           <div>
             <strong>${h.tytul}</strong>
             <span class="${statusClass}">${h.status}</span>
             (${h.corners} rzutów rożnych)
+          </div>
+          <div class="details">
+            ${detailsHtml}
           </div>
           <div class="date">🕒 ${dateStr}</div>
         </div>
