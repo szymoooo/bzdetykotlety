@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto-Filter + Historia</title>
+    <title>Auto-Filter + Historia (harmonogram)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -176,7 +176,7 @@
 </head>
 <body>
 
-    <h1>⚽ Auto-Filter + Historia</h1>
+    <h1>⚽ Auto-Filter + Historia (harmonogram 9:00, 10:00, 11:00)</h1>
 
     <div class="toolbar">
         <button class="btn-primary" onclick="fetchAndDisplay()">🔄 Sprawdź teraz</button>
@@ -187,7 +187,7 @@
     <div class="status-bar">
         <span class="info" id="lastUpdate">Ostatnie sprawdzenie: —</span>
         <span class="info" id="matchCount">Znaleziono: 0 meczów</span>
-        <span class="badge" id="autoBadge">⏳ Auto-odświeżanie co 60s</span>
+        <span class="badge" id="autoBadge">⏳ Następne zaplanowane: —</span>
     </div>
 
     <div id="results">
@@ -211,15 +211,14 @@
         };
 
         const SOURCE_URL = 'https://szymoooo.github.io/bzdetykotlety/auto.html';
-        const REFRESH_INTERVAL = 60000; // 60 sekund
+        // Godziny odświeżania (format HH:MM)
+        const SCHEDULED_TIMES = ['09:00', '10:00', '11:00'];
 
         // ===== POMOCNICZE =====
         function extractMatchData(block) {
-            // Wyciągamy U5.5
             const u55Match = block.match(/U5\.5:\s*(\d+)/);
             const u55 = u55Match ? parseInt(u55Match[1]) : null;
 
-            // Wyciągamy wszystkie "score-high" dla interesujących nas modeli
             const scoreHighs = [];
             const regex = /(SZYBKI ATAK|ROŻNE HT|DOMINACJA)[^]*?(\d+)\s*pkt/g;
             let match;
@@ -229,22 +228,36 @@
                 scoreHighs.push({ nazwa, pkt });
             }
 
-            // Status meczu – czy jest PENDING czy już zakończony?
             const pendingMatch = block.match(/PENDING/g);
             const isPending = pendingMatch ? pendingMatch.length > 0 : false;
 
-            // Próba wyciągnięcia wyniku końcowego (jeśli jest) – np. "2:1"
             const scoreMatch = block.match(/(\d+)\s*[:]\s*(\d+)/);
             let finalScore = null;
             if (scoreMatch) {
                 finalScore = { home: parseInt(scoreMatch[1]), away: parseInt(scoreMatch[2]) };
             }
 
-            // Nazwy drużyn
             const nazwyMatch = block.match(/[A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+/);
             const tytul = nazwyMatch ? nazwyMatch[0] : 'Nieznany mecz';
 
-            // Sprawdzamy kryteria
+            // Szukamy rzutów rożnych HT
+            let cornersHT = null;
+            const cornerPatterns = [
+                /Rzuty\s*rożne\s*HT[:\s]*(\d+)/i,
+                /Corners?\s*HT[:\s]*(\d+)/i,
+                /Rożne\s*HT[:\s]*(\d+)/i,
+                /Rzuty\s*rożne[:\s]*(\d+)/i,
+                /Corners?[:\s]*(\d+)/i,
+                /Rożne[:\s]*(\d+)/i
+            ];
+            for (const pattern of cornerPatterns) {
+                const m = block.match(pattern);
+                if (m) {
+                    cornersHT = parseInt(m[1]);
+                    break;
+                }
+            }
+
             const passA = (u55 !== null && u55 === PROGI.A.wartosc);
             const passB = scoreHighs.some(s => s.nazwa.includes('SZYBKI ATAK') && s.pkt >= PROGI.B.minPkt);
             const passC = scoreHighs.some(s => s.nazwa.includes('ROŻNE HT') && s.pkt >= PROGI.C.minPkt);
@@ -262,6 +275,7 @@
                 ),
                 isPending,
                 finalScore,
+                cornersHT,
                 passes,
                 passA,
                 passB,
@@ -287,12 +301,10 @@
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const html = await response.text();
 
-                // Tworzymy wirtualny DOM do parsowania
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const text = doc.body.innerText;
 
-                // Dzielimy na bloki przed każdym "U5.5:"
                 const bloki = text.split(/(?=U5\.5:\s*\d+)/).slice(1);
 
                 const znalezione = [];
@@ -302,7 +314,6 @@
                     const data = extractMatchData(block);
                     if (data.passes) {
                         znalezione.push(data);
-                        // Sprawdzamy, czy ten mecz był już w historii
                         const key = getMatchKey(data);
                         const history = getHistory();
                         if (!history.some(h => h.key === key)) {
@@ -311,7 +322,6 @@
                     }
                 });
 
-                // Wyświetlamy znalezione mecze
                 if (znalezione.length === 0) {
                     resultsDiv.innerHTML = '<div class="no-results">❌ Żaden mecz nie spełnia kryteriów.</div>';
                 } else {
@@ -327,7 +337,8 @@
                                 </div>
                                 <div class="detail"><strong>U5.5:</strong> ${w.u55}</div>
                                 ${w.scoreHighs.map(s => `<div class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</div>`).join('')}
-                                ${w.finalScore ? `<div class="detail"><strong>Wynik końcowy:</strong> ${w.finalScore.home}:${w.finalScore.away}</div>` : ''}
+                                ${w.finalScore ? `<div class="detail"><strong>Wynik końcowy (bramki):</strong> ${w.finalScore.home}:${w.finalScore.away}</div>` : ''}
+                                ${w.cornersHT !== null ? `<div class="detail"><strong>Rzuty rożne HT:</strong> ${w.cornersHT}</div>` : ''}
                                 <div class="passed">✅ SPEŁNIA WSZYSTKIE WYMAGANIA</div>
                             </div>
                         `;
@@ -335,10 +346,8 @@
                     resultsDiv.innerHTML = htmlOut;
                 }
 
-                // Aktualizujemy licznik
                 matchCountSpan.textContent = `Znaleziono: ${znalezione.length} meczów`;
 
-                // Zapisujemy NOWE mecze do historii
                 if (noweMecze.length > 0) {
                     const history = getHistory();
                     noweMecze.forEach(m => {
@@ -349,6 +358,7 @@
                             scoreHighs: m.scoreHighs,
                             isPending: m.isPending,
                             finalScore: m.finalScore,
+                            cornersHT: m.cornersHT,
                             firstSeen: new Date().toISOString(),
                             lastChecked: new Date().toISOString()
                         });
@@ -356,13 +366,9 @@
                     saveHistory(history);
                 }
 
-                // Aktualizujemy historię – aktualizujemy statusy i wyniki
                 updateHistoryWithCurrentData(znalezione);
-
-                // Wyświetlamy historię
                 renderHistory();
 
-                // Aktualizujemy czas
                 lastUpdateSpan.textContent = `Ostatnie sprawdzenie: ${new Date().toLocaleString()}`;
 
             } catch (error) {
@@ -411,18 +417,15 @@
             const history = getHistory();
             if (history.length === 0) return;
 
-            // Tworzymy mapę aktualnych meczów po kluczu
             const currentMap = {};
             aktualneMecze.forEach(m => {
                 currentMap[getMatchKey(m)] = m;
             });
 
-            // Aktualizujemy każdy wpis w historii
             let changed = false;
             history.forEach(h => {
                 const current = currentMap[h.key];
                 if (current) {
-                    // Aktualizujemy status i wynik
                     if (h.isPending !== current.isPending) {
                         h.isPending = current.isPending;
                         changed = true;
@@ -433,9 +436,12 @@
                             changed = true;
                         }
                     }
+                    if (current.cornersHT !== null && h.cornersHT !== current.cornersHT) {
+                        h.cornersHT = current.cornersHT;
+                        changed = true;
+                    }
                     h.lastChecked = new Date().toISOString();
                 } else {
-                    // Mecz zniknął z listy – oznaczamy jako zakończony jeśli był PENDING
                     if (h.isPending) {
                         h.isPending = false;
                         changed = true;
@@ -457,42 +463,48 @@
                 return;
             }
 
-            // Sortujemy od najnowszych
             const sorted = [...history].sort((a, b) => new Date(b.firstSeen) - new Date(a.firstSeen));
 
             let html = '';
             sorted.forEach(h => {
-                const data = h;
-                const statusText = data.isPending ? 'PENDING' : 'ZAKOŃCZONY';
-                const statusClass = data.isPending ? 'status-pending' : 'status-finished';
+                const statusText = h.isPending ? 'PENDING' : 'ZAKOŃCZONY';
+                const statusClass = h.isPending ? 'status-pending' : 'status-finished';
 
-                // Czy mecz zakończył się OVER 4.5?
                 let resultText = '—';
                 let resultClass = 'result-unknown';
-                if (data.finalScore) {
-                    const total = data.finalScore.home + data.finalScore.away;
-                    if (total >= 5) {
-                        resultText = `OVER 4.5 (${total} bramek) ✅`;
-                        resultClass = 'result-over';
+
+                if (!h.isPending) {
+                    if (h.cornersHT !== null && h.cornersHT !== undefined) {
+                        const total = h.cornersHT;
+                        if (total >= 4) {
+                            resultText = `OVER 3.5 (${total} rzutów rożnych) ✅`;
+                            resultClass = 'result-over';
+                        } else {
+                            resultText = `UNDER 3.5 (${total} rzutów rożnych) ❌`;
+                            resultClass = 'result-under';
+                        }
                     } else {
-                        resultText = `UNDER 4.5 (${total} bramek) ❌`;
-                        resultClass = 'result-under';
+                        if (h.finalScore) {
+                            const total = h.finalScore.home + h.finalScore.away;
+                            resultText = `Brak danych o rzutach rożnych. Wynik bramkowy: ${h.finalScore.home}:${h.finalScore.away} (suma ${total})`;
+                            resultClass = 'result-unknown';
+                        } else {
+                            resultText = 'Brak danych';
+                            resultClass = 'result-unknown';
+                        }
                     }
-                } else if (!data.isPending) {
-                    resultText = 'Brak wyniku';
-                    resultClass = 'result-unknown';
                 } else {
                     resultText = 'Trwa...';
                     resultClass = 'result-unknown';
                 }
 
-                const firstSeen = new Date(data.firstSeen).toLocaleString();
-                const lastChecked = new Date(data.lastChecked).toLocaleString();
+                const firstSeen = new Date(h.firstSeen).toLocaleString();
+                const lastChecked = new Date(h.lastChecked).toLocaleString();
 
                 html += `
                     <div class="history-item">
                         <div>
-                            <strong>${data.tytul}</strong>
+                            <strong>${h.tytul}</strong>
                             <span class="status ${statusClass}">${statusText}</span>
                             <span class="result ${resultClass}">${resultText}</span>
                         </div>
@@ -506,26 +518,67 @@
             container.innerHTML = html;
         }
 
-        // ===== AUTO-ODŚWIEŻANIE =====
-        let autoRefreshTimer = null;
+        // ===== HARMONOGRAM (9:00, 10:00, 11:00) =====
+        function getNextScheduledTime() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const currentTime = currentHour * 60 + currentMinute;
 
-        function startAutoRefresh() {
-            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-            autoRefreshTimer = setInterval(() => {
+            // Konwertujemy zaplanowane godziny na minuty od północy
+            const scheduledMinutes = SCHEDULED_TIMES.map(t => {
+                const [h, m] = t.split(':').map(Number);
+                return h * 60 + m;
+            }).sort((a, b) => a - b);
+
+            // Szukamy najbliższej przyszłej godziny
+            for (const sm of scheduledMinutes) {
+                if (sm > currentTime) {
+                    return sm;
+                }
+            }
+            // Jeśli wszystkie minęły, zwracamy pierwszą na następny dzień
+            return scheduledMinutes[0] + 1440; // +24h
+        }
+
+        function scheduleNextRun() {
+            const now = new Date();
+            const nextMinutes = getNextScheduledTime();
+            const nextTime = new Date(now);
+            // Ustawiamy na dziś o danej godzinie (w minutach)
+            const nextHour = Math.floor(nextMinutes / 60) % 24;
+            const nextMinute = nextMinutes % 60;
+            nextTime.setHours(nextHour, nextMinute, 0, 0);
+            // Jeśli czas już minął (co może się zdarzyć dla następnego dnia), dodajemy 24h
+            if (nextTime <= now) {
+                nextTime.setDate(nextTime.getDate() + 1);
+            }
+
+            const diffMs = nextTime - now;
+            const diffMin = Math.round(diffMs / 60000);
+            const badge = document.getElementById('autoBadge');
+            badge.textContent = `⏳ Następne zaplanowane: ${nextTime.toLocaleTimeString()} (za ${diffMin} min)`;
+
+            // Ustawiamy timeout
+            if (window._scheduledTimeout) clearTimeout(window._scheduledTimeout);
+            window._scheduledTimeout = setTimeout(() => {
                 fetchAndDisplay();
-            }, REFRESH_INTERVAL);
+                // Po wykonaniu, planujemy kolejne
+                scheduleNextRun();
+            }, diffMs);
         }
 
         // ===== START =====
-        // Pierwsze uruchomienie po załadowaniu strony
         window.addEventListener('DOMContentLoaded', () => {
-            fetchAndDisplay();
-            startAutoRefresh();
+            // Pierwsze odświeżenie od razu (jeśli strona otwarta)
+            fetchAndDisplay().then(() => {
+                // Planujemy kolejne
+                scheduleNextRun();
+            });
         });
 
-        // ===== DODATKOWO – przycisk do ręcznego zatrzymania auto (opcjonalnie) =====
-        // Można dodać później, jeśli będzie potrzebne
+        // Jeśli użytkownik ręcznie odświeży przyciskiem, nie przerywamy harmonogramu
+        // ale harmonogram i tak zostanie wykonany w swoim czasie.
     </script>
-
 </body>
 </html>
