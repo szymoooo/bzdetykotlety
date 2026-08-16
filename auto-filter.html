@@ -1,479 +1,472 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto-Filter + Historia (Twoja logika)</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #0f0f1a;
-            color: #eee;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 { color: #4caf50; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
-        .toolbar button {
-            padding: 10px 24px; font-size: 16px; border: none; border-radius: 6px;
-            cursor: pointer; background: #2a2a3e; color: #eee; transition: 0.2s;
-        }
-        .toolbar button:hover { background: #3a3a5e; }
-        .toolbar .btn-primary { background: #4caf50; color: #fff; }
-        .toolbar .btn-primary:hover { background: #66bb6a; }
-        .toolbar .btn-danger { background: #d32f2f; color: #fff; }
-        .toolbar .btn-danger:hover { background: #f44336; }
-        .status-bar {
-            background: #1a1a2e; padding: 10px 16px; border-radius: 8px;
-            margin-bottom: 20px; display: flex; flex-wrap: wrap;
-            justify-content: space-between; align-items: center;
-        }
-        .status-bar .info { color: #aaa; font-size: 14px; }
-        .status-bar .badge { background: #4caf50; padding: 4px 12px; border-radius: 20px; font-size: 13px; color: #fff; }
-        .match {
-            background: #1a1a2e; border-left: 4px solid #4caf50;
-            margin: 12px 0; padding: 16px 20px; border-radius: 8px;
-        }
-        .match .title { font-size: 1.2em; font-weight: bold; color: #fff; }
-        .match .detail { margin: 4px 0; color: #bbb; font-size: 14px; }
-        .match .detail strong { color: #eee; }
-        .match .status {
-            display: inline-block; padding: 2px 12px; border-radius: 12px;
-            font-size: 12px; font-weight: bold; margin-left: 10px;
-        }
-        .status-pending { background: #f57c00; color: #fff; }
-        .status-finished { background: #2e7d32; color: #fff; }
-        .match .passed { color: #4caf50; font-weight: bold; }
-        .no-results { color: #ff6b6b; padding: 30px; text-align: center; background: #1a1a2e; border-radius: 8px; }
-        .history-section { margin-top: 40px; border-top: 2px solid #333; padding-top: 20px; }
-        .history-section h2 { color: #90caf9; }
-        .history-item {
-            background: #12121f; padding: 10px 16px; margin: 6px 0;
-            border-radius: 6px; font-size: 14px;
-            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-        }
-        .history-item .date { color: #888; font-size: 12px; }
-        .history-item .result { font-weight: bold; }
-        .result-over { color: #ef5350; }
-        .result-under { color: #66bb6a; }
-        .result-unknown { color: #ffa726; }
-        @media (max-width: 600px) {
-            .toolbar button { width: 100%; }
-            .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snajper over 3.5 pierwsza połowa</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f0f1a;
+      color: #eee;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #4caf50;
+      border-bottom: 2px solid #333;
+      padding-bottom: 10px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .toolbar button {
+      padding: 10px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #2a2a3e;
+      color: #eee;
+      transition: 0.2s;
+    }
+    .toolbar button:hover { background: #3a3a5e; }
+    .btn-primary {
+      background: #4caf50 !important;
+      color: #fff !important;
+    }
+    .btn-primary:hover { background: #66bb6a !important; }
+    .btn-danger {
+      background: #d32f2f !important;
+      color: #fff !important;
+    }
+    .btn-danger:hover { background: #f44336 !important; }
+
+    .status-bar {
+      background: #1a1a2e;
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-bar .info {
+      color: #aaa;
+      font-size: 14px;
+    }
+    .badge {
+      background: #4caf50;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    /* Kafle – siatka */
+    .kafelki {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .kafelek {
+      background: #1a1a2e;
+      border-left: 4px solid #4caf50;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .kafelek .title {
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+    .kafelek .detail {
+      color: #bbb;
+      font-size: 14px;
+    }
+    .kafelek .detail strong { color: #eee; }
+    .kafelek .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .kafelek .input-group input {
+      flex: 1;
+      min-width: 60px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #0f0f1a;
+      color: #eee;
+      font-size: 16px;
+      width: 80px;
+    }
+    .kafelek .input-group button {
+      padding: 6px 16px;
+      background: #4caf50;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .kafelek .input-group button:hover { background: #66bb6a; }
+    .status-pending {
+      background: #f57c00;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      color: #fff;
+    }
+
+    .no-results {
+      color: #ff6b6b;
+      padding: 30px;
+      text-align: center;
+      background: #1a1a2e;
+      border-radius: 8px;
+    }
+
+    /* Historia */
+    .history-section {
+      margin-top: 40px;
+      border-top: 2px solid #333;
+      padding-top: 20px;
+    }
+    .history-section h2 { color: #90caf9; }
+    .history-item {
+      background: #12121f;
+      padding: 10px 16px;
+      margin: 6px 0;
+      border-radius: 6px;
+      font-size: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-item .date { color: #888; font-size: 12px; }
+    .win { color: #4caf50; font-weight: bold; }
+    .lose { color: #ef5350; font-weight: bold; }
+
+    @media (max-width: 600px) {
+      .toolbar button { width: 100%; }
+      .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+    }
+  </style>
 </head>
 <body>
 
-    <h1>⚽ Auto-Filter + Historia (Twoja logika)</h1>
+<h1>⚽ Snajper over 3.5 pierwsza połowa</h1>
 
-    <div class="toolbar">
-        <button class="btn-primary" onclick="fetchAndDisplay()">🔄 Sprawdź teraz</button>
-        <button onclick="clearHistory()">🗑️ Wyczyść historię</button>
-        <button onclick="exportHistory()">📥 Eksportuj historię (JSON)</button>
-    </div>
+<div class="toolbar">
+  <button class="btn-primary" onclick="fetchAndDisplay()">🔄 Sprawdź teraz</button>
+  <button class="btn-danger" onclick="clearHistory()">🗑️ Wyczyść historię</button>
+  <button onclick="exportHistory()">📥 Eksportuj historię (JSON)</button>
+</div>
 
-    <div class="status-bar">
-        <span class="info" id="lastUpdate">Ostatnie sprawdzenie: —</span>
-        <span class="info" id="matchCount">Znaleziono: 0 meczów</span>
-        <span class="badge" id="autoBadge">⏳ Następne zaplanowane: —</span>
-    </div>
+<div class="status-bar">
+  <span class="info" id="lastUpdate">Ostatnie sprawdzenie: —</span>
+  <span class="info" id="matchCount">Aktywne: 0</span>
+  <span class="badge" id="autoBadge">⏳ Następne zaplanowane: —</span>
+</div>
 
-    <div id="results">
-        <div class="no-results">⏳ Kliknij "Sprawdź teraz" lub poczekaj na automatyczne odświeżenie...</div>
-    </div>
+<!-- Kafle aktywnych meczów -->
+<div id="kafelkiContainer" class="kafelki">
+  <div class="no-results">⏳ Kliknij "Sprawdź teraz" lub poczekaj na automatyczne odświeżenie...</div>
+</div>
 
-    <div class="history-section">
-        <h2>📜 Historia wykrytych meczów</h2>
-        <div id="historyContainer">
-            <p style="color:#888;">Brak zapisanej historii.</p>
-        </div>
-    </div>
+<!-- Historia -->
+<div class="history-section">
+  <h2>📜 Historia rozstrzygniętych</h2>
+  <div id="historyContainer">
+    <p style="color:#888;">Brak zapisanej historii.</p>
+  </div>
+</div>
 
-    <script>
-        // ===== KONFIGURACJA ===== (Twoja)
-        const PROGI = {
-            A: { nazwa: 'U5.5', wartosc: 0 },
-            B: { nazwa: 'SZYBKI ATAK: ROŻNY (OVER)', minPkt: 90 },
-            C: { nazwa: 'ROŻNE HT (OVER 4.5)', minPkt: 90 },
-            D: { nazwa: 'DOMINACJA', minPkt: 80 }
-        };
+<script>
+  // ===== KONFIGURACJA =====
+  const PROGI = {
+    A: { nazwa: 'U5.5', wartosc: 0 },
+    B: { nazwa: 'SZYBKI ATAK: ROŻNY (OVER)', minPkt: 90 },
+    C: { nazwa: 'ROŻNE HT (OVER 4.5)', minPkt: 90 },
+    D: { nazwa: 'DOMINACJA', minPkt: 80 }
+  };
+  const SOURCE_URL = 'https://szymoooo.github.io/bzdetykotlety/auto.html';
+  const SCHEDULED_TIMES = ['09:00', '10:00', '11:00'];
 
-        const SOURCE_URL = 'https://szymoooo.github.io/bzdetykotlety/auto.html';
-        const SCHEDULED_TIMES = ['09:00', '10:00', '11:00'];
+  // ===== POMOCNICZE =====
+  function extractMatchData(block) {
+    const u55Match = block.match(/U5\.5:\s*(\d+)/);
+    const u55 = u55Match ? parseInt(u55Match[1]) : null;
 
-        // ===== FUNKCJA EKSTRAKCJI (Twoja logika z pliku) =====
-        function extractMatchData(block) {
-            // Wyciągamy U5.5
-            const u55Match = block.match(/U5\.5:\s*(\d+)/);
-            const u55 = u55Match ? parseInt(u55Match[1]) : null;
+    const scoreHighs = [];
+    const regex = /(SZYBKI ATAK|ROŻNE HT|DOMINACJA)[^]*?(\d+)\s*pkt/g;
+    let match;
+    while ((match = regex.exec(block)) !== null) {
+      const nazwa = match[1].trim();
+      const pkt = parseInt(match[2]);
+      scoreHighs.push({ nazwa, pkt });
+    }
 
-            // Wyciągamy wszystkie "score-high" dla modeli
-            const scoreHighs = [];
-            const regex = /(SZYBKI ATAK|ROŻNE HT|DOMINACJA)[^]*?(\d+)\s*pkt/g;
-            let match;
-            while ((match = regex.exec(block)) !== null) {
-                const nazwa = match[1].trim();
-                const pkt = parseInt(match[2]);
-                // Dodajemy tylko jeśli to jeden z naszych trzech modeli
-                if (nazwa.includes('SZYBKI ATAK') || nazwa.includes('ROŻNE HT') || nazwa.includes('DOMINACJA')) {
-                    scoreHighs.push({ nazwa, pkt });
-                }
-            }
+    const pendingMatch = block.match(/PENDING/g);
+    const isPending = pendingMatch ? pendingMatch.length > 0 : false;
 
-            // Status meczu
-            const pendingMatch = block.match(/PENDING/g);
-            const isPending = pendingMatch ? pendingMatch.length > 0 : false;
+    // Nazwy drużyn
+    const nazwyMatch = block.match(/[A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+/);
+    const tytul = nazwyMatch ? nazwyMatch[0] : 'Nieznany mecz';
 
-            // Wynik końcowy (bramki)
-            const scoreMatch = block.match(/(\d+)\s*[:]\s*(\d+)/);
-            let finalScore = null;
-            if (scoreMatch) {
-                finalScore = { home: parseInt(scoreMatch[1]), away: parseInt(scoreMatch[2]) };
-            }
+    // Sprawdzamy kryteria
+    const passA = (u55 !== null && u55 === PROGI.A.wartosc);
+    const passB = scoreHighs.some(s => s.nazwa.includes('SZYBKI ATAK') && s.pkt >= PROGI.B.minPkt);
+    const passC = scoreHighs.some(s => s.nazwa.includes('ROŻNE HT') && s.pkt >= PROGI.C.minPkt);
+    const passD = scoreHighs.some(s => s.nazwa.includes('DOMINACJA') && s.pkt >= PROGI.D.minPkt);
 
-            // Nazwy drużyn
-            const nazwyMatch = block.match(/[A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+/);
-            const tytul = nazwyMatch ? nazwyMatch[0] : 'Nieznany mecz';
+    const passes = passA && passB && passC && passD;
 
-            // Rzuty rożne HT
-            let cornersHT = null;
-            const cornerPatterns = [
-                /Rzuty\s*rożne\s*HT[:\s]*(\d+)/i,
-                /Corners?\s*HT[:\s]*(\d+)/i,
-                /Rożne\s*HT[:\s]*(\d+)/i,
-                /Rzuty\s*rożne[:\s]*(\d+)/i,
-                /Corners?[:\s]*(\d+)/i,
-                /Rożne[:\s]*(\d+)/i
-            ];
-            for (const pattern of cornerPatterns) {
-                const m = block.match(pattern);
-                if (m) {
-                    cornersHT = parseInt(m[1]);
-                    break;
-                }
-            }
+    return {
+      tytul,
+      u55,
+      scoreHighs: scoreHighs.filter(s =>
+        s.nazwa.includes('SZYBKI ATAK') ||
+        s.nazwa.includes('ROŻNE HT') ||
+        s.nazwa.includes('DOMINACJA')
+      ),
+      isPending,
+      passes
+    };
+  }
 
-            // Sprawdzamy kryteria
-            const passA = (u55 !== null && u55 === PROGI.A.wartosc);
-            const passB = scoreHighs.some(s => s.nazwa.includes('SZYBKI ATAK') && s.pkt >= PROGI.B.minPkt);
-            const passC = scoreHighs.some(s => s.nazwa.includes('ROŻNE HT') && s.pkt >= PROGI.C.minPkt);
-            const passD = scoreHighs.some(s => s.nazwa.includes('DOMINACJA') && s.pkt >= PROGI.D.minPkt);
+  function getMatchKey(match) {
+    return match.tytul + '|' + match.u55;
+  }
 
-            const passes = passA && passB && passC && passD;
+  // ===== GŁÓWNA FUNKCJA =====
+  async function fetchAndDisplay() {
+    const container = document.getElementById('kafelkiContainer');
+    const lastUpdateSpan = document.getElementById('lastUpdate');
+    const matchCountSpan = document.getElementById('matchCount');
 
-            return {
-                tytul,
-                u55,
-                scoreHighs: scoreHighs.filter(s =>
-                    s.nazwa.includes('SZYBKI ATAK') ||
-                    s.nazwa.includes('ROŻNE HT') ||
-                    s.nazwa.includes('DOMINACJA')
-                ),
-                isPending,
-                finalScore,
-                cornersHT,
-                passes,
-                passA,
-                passB,
-                passC,
-                passD
-            };
+    try {
+      container.innerHTML = '<div class="no-results">⏳ Ładowanie danych...</div>';
+
+      const response = await fetch(SOURCE_URL);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const html = await response.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const text = doc.body.innerText;
+
+      // Dzielimy przed U5.5:
+      const bloki = text.split(/(?=U5\.5:\s*\d+)/).slice(1);
+
+      const znalezione = [];
+      bloki.forEach(block => {
+        const data = extractMatchData(block);
+        if (data.passes) {
+          znalezione.push(data);
         }
+      });
 
-        function getMatchKey(match) {
-            return match.tytul + '|' + match.u55;
-        }
+      // Pobieramy historię, aby odfiltrować już rozstrzygnięte
+      const history = getHistory();
+      const historyKeys = new Set(history.map(h => h.key));
 
-        // ===== GŁÓWNA FUNKCJA POBIERANIA (używa Twojego podziału) =====
-        async function fetchAndDisplay() {
-            const resultsDiv = document.getElementById('results');
-            const lastUpdateSpan = document.getElementById('lastUpdate');
-            const matchCountSpan = document.getElementById('matchCount');
+      // Aktywne = takie, które nie są w historii
+      const aktywne = znalezione.filter(m => !historyKeys.has(getMatchKey(m)));
 
-            try {
-                resultsDiv.innerHTML = '<div class="no-results">⏳ Ładowanie danych...</div>';
-
-                const response = await fetch(SOURCE_URL);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const html = await response.text();
-
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const text = doc.body.innerText;
-
-                // ===== TWOJA LOGIKA PODZIAŁU (z pliku) =====
-                const vsRegex = /([A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+)/g;
-                let matches = [];
-                let m;
-                while ((m = vsRegex.exec(text)) !== null) {
-                    matches.push({
-                        start: m.index,
-                        end: m.index + m[0].length,
-                        full: m[0]
-                    });
-                }
-
-                // Tworzymy bloki – od początku każdego meczu do początku następnego
-                const bloki = [];
-                for (let i = 0; i < matches.length; i++) {
-                    const start = matches[i].start;
-                    const end = (i + 1 < matches.length) ? matches[i+1].start : text.length;
-                    const block = text.substring(start, end);
-                    bloki.push(block);
-                }
-
-                // Przetwarzanie bloków
-                const znalezione = [];
-                const noweMecze = [];
-
-                bloki.forEach(block => {
-                    const data = extractMatchData(block);
-                    if (data.passes) {
-                        znalezione.push(data);
-                        const key = getMatchKey(data);
-                        const history = getHistory();
-                        if (!history.some(h => h.key === key)) {
-                            noweMecze.push(data);
-                        }
-                    }
-                });
-
-                // Wyświetlanie wyników
-                if (znalezione.length === 0) {
-                    resultsDiv.innerHTML = '<div class="no-results">❌ Żaden mecz nie spełnia kryteriów.</div>';
-                } else {
-                    let htmlOut = '';
-                    znalezione.forEach((w, i) => {
-                        const statusClass = w.isPending ? 'status-pending' : 'status-finished';
-                        const statusText = w.isPending ? 'PENDING' : 'ZAKOŃCZONY';
-                        htmlOut += `
-                            <div class="match">
-                                <div class="title">
-                                    ${w.tytul}
-                                    <span class="status ${statusClass}">${statusText}</span>
-                                </div>
-                                <div class="detail"><strong>U5.5:</strong> ${w.u55}</div>
-                                ${w.scoreHighs.map(s => `<div class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</div>`).join('')}
-                                ${w.finalScore ? `<div class="detail"><strong>Wynik końcowy (bramki):</strong> ${w.finalScore.home}:${w.finalScore.away}</div>` : ''}
-                                ${w.cornersHT !== null ? `<div class="detail"><strong>Rzuty rożne HT:</strong> ${w.cornersHT}</div>` : ''}
-                                <div class="passed">✅ SPEŁNIA WSZYSTKIE WYMAGANIA</div>
-                            </div>
-                        `;
-                    });
-                    resultsDiv.innerHTML = htmlOut;
-                }
-
-                matchCountSpan.textContent = `Znaleziono: ${znalezione.length} meczów`;
-
-                // Zapis do historii
-                if (noweMecze.length > 0) {
-                    const history = getHistory();
-                    noweMecze.forEach(m => {
-                        history.push({
-                            key: getMatchKey(m),
-                            tytul: m.tytul,
-                            u55: m.u55,
-                            scoreHighs: m.scoreHighs,
-                            isPending: m.isPending,
-                            finalScore: m.finalScore,
-                            cornersHT: m.cornersHT,
-                            firstSeen: new Date().toISOString(),
-                            lastChecked: new Date().toISOString()
-                        });
-                    });
-                    saveHistory(history);
-                }
-
-                updateHistoryWithCurrentData(znalezione);
-                renderHistory();
-
-                lastUpdateSpan.textContent = `Ostatnie sprawdzenie: ${new Date().toLocaleString()}`;
-
-            } catch (error) {
-                resultsDiv.innerHTML = `<div class="no-results">❌ Błąd: ${error.message}</div>`;
-                console.error(error);
-            }
-        }
-
-        // ===== OBSŁUGA HISTORII (localStorage) =====
-        function getHistory() {
-            try {
-                const data = localStorage.getItem('autoFilterHistory');
-                return data ? JSON.parse(data) : [];
-            } catch { return []; }
-        }
-
-        function saveHistory(history) {
-            localStorage.setItem('autoFilterHistory', JSON.stringify(history));
-        }
-
-        function clearHistory() {
-            if (confirm('Usunąć całą historię?')) {
-                localStorage.removeItem('autoFilterHistory');
-                renderHistory();
-            }
-        }
-
-        function exportHistory() {
-            const history = getHistory();
-            if (history.length === 0) {
-                alert('Brak historii do eksportu.');
-                return;
-            }
-            const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `historia_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function updateHistoryWithCurrentData(aktualneMecze) {
-            const history = getHistory();
-            if (history.length === 0) return;
-
-            const currentMap = {};
-            aktualneMecze.forEach(m => {
-                currentMap[getMatchKey(m)] = m;
-            });
-
-            let changed = false;
-            history.forEach(h => {
-                const current = currentMap[h.key];
-                if (current) {
-                    if (h.isPending !== current.isPending) {
-                        h.isPending = current.isPending;
-                        changed = true;
-                    }
-                    if (current.finalScore) {
-                        if (!h.finalScore || h.finalScore.home !== current.finalScore.home || h.finalScore.away !== current.finalScore.away) {
-                            h.finalScore = current.finalScore;
-                            changed = true;
-                        }
-                    }
-                    if (current.cornersHT !== null && h.cornersHT !== current.cornersHT) {
-                        h.cornersHT = current.cornersHT;
-                        changed = true;
-                    }
-                    h.lastChecked = new Date().toISOString();
-                } else {
-                    if (h.isPending) {
-                        h.isPending = false;
-                        changed = true;
-                    }
-                }
-            });
-
-            if (changed) saveHistory(history);
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('historyContainer');
-            const history = getHistory();
-
-            if (history.length === 0) {
-                container.innerHTML = '<p style="color:#888;">Brak zapisanej historii.</p>';
-                return;
-            }
-
-            const sorted = [...history].sort((a, b) => new Date(b.firstSeen) - new Date(a.firstSeen));
-
-            let html = '';
-            sorted.forEach(h => {
-                const statusText = h.isPending ? 'PENDING' : 'ZAKOŃCZONY';
-                const statusClass = h.isPending ? 'status-pending' : 'status-finished';
-
-                let resultText = '—';
-                let resultClass = 'result-unknown';
-
-                if (!h.isPending) {
-                    if (h.cornersHT !== null && h.cornersHT !== undefined) {
-                        const total = h.cornersHT;
-                        if (total >= 4) {
-                            resultText = `OVER 3.5 (${total} rzutów rożnych) ✅`;
-                            resultClass = 'result-over';
-                        } else {
-                            resultText = `UNDER 3.5 (${total} rzutów rożnych) ❌`;
-                            resultClass = 'result-under';
-                        }
-                    } else {
-                        if (h.finalScore) {
-                            const total = h.finalScore.home + h.finalScore.away;
-                            resultText = `Brak danych o rzutach rożnych. Wynik bramkowy: ${h.finalScore.home}:${h.finalScore.away} (suma ${total})`;
-                            resultClass = 'result-unknown';
-                        } else {
-                            resultText = 'Brak danych';
-                            resultClass = 'result-unknown';
-                        }
-                    }
-                } else {
-                    resultText = 'Trwa...';
-                    resultClass = 'result-unknown';
-                }
-
-                const firstSeen = new Date(h.firstSeen).toLocaleString();
-                const lastChecked = new Date(h.lastChecked).toLocaleString();
-
-                html += `
-                    <div class="history-item">
-                        <div>
-                            <strong>${h.tytul}</strong>
-                            <span class="status ${statusClass}">${statusText}</span>
-                            <span class="result ${resultClass}">${resultText}</span>
-                        </div>
-                        <div class="date">
-                            🕒 ${firstSeen} | Ostatnio: ${lastChecked}
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        // ===== HARMONOGRAM =====
-        function getNextScheduledTime() {
-            const now = new Date();
-            const currentTime = now.getHours() * 60 + now.getMinutes();
-            const scheduledMinutes = SCHEDULED_TIMES.map(t => {
-                const [h, m] = t.split(':').map(Number);
-                return h * 60 + m;
-            }).sort((a, b) => a - b);
-
-            for (const sm of scheduledMinutes) {
-                if (sm > currentTime) return sm;
-            }
-            return scheduledMinutes[0] + 1440;
-        }
-
-        function scheduleNextRun() {
-            const now = new Date();
-            const nextMinutes = getNextScheduledTime();
-            const nextTime = new Date(now);
-            const nextHour = Math.floor(nextMinutes / 60) % 24;
-            const nextMinute = nextMinutes % 60;
-            nextTime.setHours(nextHour, nextMinute, 0, 0);
-            if (nextTime <= now) nextTime.setDate(nextTime.getDate() + 1);
-
-            const diffMs = nextTime - now;
-            const diffMin = Math.round(diffMs / 60000);
-            document.getElementById('autoBadge').textContent = `⏳ Następne zaplanowane: ${nextTime.toLocaleTimeString()} (za ${diffMin} min)`;
-
-            if (window._scheduledTimeout) clearTimeout(window._scheduledTimeout);
-            window._scheduledTimeout = setTimeout(() => {
-                fetchAndDisplay();
-                scheduleNextRun();
-            }, diffMs);
-        }
-
-        // ===== START =====
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchAndDisplay().then(() => scheduleNextRun());
+      // Wyświetlamy kafle
+      if (aktywne.length === 0) {
+        container.innerHTML = '<div class="no-results">❌ Brak aktywnych meczów spełniających kryteria.</div>';
+      } else {
+        let htmlOut = '';
+        aktywne.forEach((m, idx) => {
+          const key = getMatchKey(m);
+          htmlOut += `
+            <div class="kafelek" data-key="${key}">
+              <div class="title">${m.tytul}</div>
+              <div class="detail"><strong>U5.5:</strong> ${m.u55}</div>
+              ${m.scoreHighs.map(s => `<div class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</div>`).join('')}
+              <div class="detail"><span class="status-pending">PENDING</span></div>
+              <div class="input-group">
+                <input type="number" id="corners_${idx}" min="0" step="1" placeholder="Rzuty rożne HT" style="width:100px;">
+                <button onclick="saveResult('${key}', '${m.tytul}', ${idx})">Zapisz</button>
+              </div>
+            </div>
+          `;
         });
-    </script>
+        container.innerHTML = htmlOut;
+      }
+
+      matchCountSpan.textContent = `Aktywne: ${aktywne.length}`;
+      lastUpdateSpan.textContent = `Ostatnie sprawdzenie: ${new Date().toLocaleString()}`;
+
+    } catch (error) {
+      container.innerHTML = `<div class="no-results">❌ Błąd: ${error.message}</div>`;
+      console.error(error);
+    }
+  }
+
+  // ===== ZAPIS WYNIKU =====
+  function saveResult(key, tytul, idx) {
+    const input = document.getElementById(`corners_${idx}`);
+    if (!input) return;
+    const val = parseInt(input.value);
+    if (isNaN(val) || val < 0) {
+      alert('Wpisz poprawną liczbę rzutów rożnych (≥0)');
+      return;
+    }
+
+    // Sprawdzamy, czy mecz nadal istnieje (czy ktoś już go nie zapisał)
+    const kafelek = document.querySelector(`.kafelek[data-key="${key}"]`);
+    if (!kafelek) {
+      alert('Ten mecz został już rozstrzygnięty.');
+      return;
+    }
+
+    // Określamy status
+    const status = val >= 4 ? 'WYGRANY' : 'PRZEGRANY';
+
+    // Zapisujemy w historii
+    const history = getHistory();
+    history.push({
+      key: key,
+      tytul: tytul,
+      corners: val,
+      status: status,
+      date: new Date().toISOString()
+    });
+    saveHistory(history);
+
+    // Usuwamy kafelek z DOM
+    kafelek.remove();
+
+    // Aktualizujemy licznik
+    const countSpan = document.getElementById('matchCount');
+    const activeCount = document.querySelectorAll('.kafelek').length;
+    countSpan.textContent = `Aktywne: ${activeCount}`;
+
+    // Jeśli nie ma już kafeli, wyświetlamy komunikat
+    if (activeCount === 0) {
+      const container = document.getElementById('kafelkiContainer');
+      container.innerHTML = '<div class="no-results">❌ Brak aktywnych meczów spełniających kryteria.</div>';
+    }
+
+    // Odświeżamy historię
+    renderHistory();
+
+    // Opcjonalnie – informacja
+    alert(`Zapisano: ${tytul} → ${val} rzutów rożnych → ${status}`);
+  }
+
+  // ===== OBSŁUGA HISTORII (localStorage) =====
+  function getHistory() {
+    try {
+      const data = localStorage.getItem('snajperHistory');
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  }
+  function saveHistory(history) {
+    localStorage.setItem('snajperHistory', JSON.stringify(history));
+  }
+  function clearHistory() {
+    if (confirm('Usunąć całą historię?')) {
+      localStorage.removeItem('snajperHistory');
+      renderHistory();
+      fetchAndDisplay(); // odświeżamy listę aktywnych (mogą wrócić)
+    }
+  }
+  function exportHistory() {
+    const history = getHistory();
+    if (history.length === 0) { alert('Brak historii.'); return; }
+    const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historia_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('historyContainer');
+    const history = getHistory();
+    if (history.length === 0) {
+      container.innerHTML = '<p style="color:#888;">Brak zapisanej historii.</p>';
+      return;
+    }
+    const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+    let html = '';
+    sorted.forEach(h => {
+      const statusClass = h.status === 'WYGRANY' ? 'win' : 'lose';
+      const dateStr = new Date(h.date).toLocaleString();
+      html += `
+        <div class="history-item">
+          <div>
+            <strong>${h.tytul}</strong>
+            <span class="${statusClass}">${h.status}</span>
+            (${h.corners} rzutów rożnych)
+          </div>
+          <div class="date">🕒 ${dateStr}</div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  // ===== HARMONOGRAM (9:00, 10:00, 11:00) =====
+  function getNextScheduledTime() {
+    const now = new Date();
+    const current = now.getHours() * 60 + now.getMinutes();
+    const scheduled = SCHEDULED_TIMES.map(t => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    }).sort((a, b) => a - b);
+    for (const s of scheduled) {
+      if (s > current) return s;
+    }
+    return scheduled[0] + 1440;
+  }
+
+  function scheduleNextRun() {
+    const now = new Date();
+    const nextMinutes = getNextScheduledTime();
+    const next = new Date(now);
+    next.setHours(Math.floor(nextMinutes / 60) % 24, nextMinutes % 60, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+
+    const diff = next - now;
+    document.getElementById('autoBadge').textContent =
+      `⏳ Następne zaplanowane: ${next.toLocaleTimeString()} (za ${Math.round(diff/60000)} min)`;
+
+    if (window._scheduledTimeout) clearTimeout(window._scheduledTimeout);
+    window._scheduledTimeout = setTimeout(() => {
+      fetchAndDisplay();
+      scheduleNextRun();
+    }, diff);
+  }
+
+  // ===== START =====
+  window.addEventListener('DOMContentLoaded', () => {
+    fetchAndDisplay().then(() => {
+      renderHistory();
+      scheduleNextRun();
+    });
+  });
+</script>
 </body>
 </html>
