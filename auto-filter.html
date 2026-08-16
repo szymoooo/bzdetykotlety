@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Filter + Historia</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #eee;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4caf50;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .toolbar button {
+            padding: 10px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #2a2a3e;
+            color: #eee;
+            transition: 0.2s;
+        }
+        .toolbar button:hover {
+            background: #3a3a5e;
+        }
+        .toolbar .btn-primary {
+            background: #4caf50;
+            color: #fff;
+        }
+        .toolbar .btn-primary:hover {
+            background: #66bb6a;
+        }
+        .toolbar .btn-danger {
+            background: #d32f2f;
+            color: #fff;
+        }
+        .toolbar .btn-danger:hover {
+            background: #f44336;
+        }
+        .status-bar {
+            background: #1a1a2e;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-bar .info {
+            color: #aaa;
+            font-size: 14px;
+        }
+        .status-bar .badge {
+            background: #4caf50;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #fff;
+        }
+        .match {
+            background: #1a1a2e;
+            border-left: 4px solid #4caf50;
+            margin: 12px 0;
+            padding: 16px 20px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+        .match .title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+        }
+        .match .detail {
+            margin: 4px 0;
+            color: #bbb;
+            font-size: 14px;
+        }
+        .match .detail strong {
+            color: #eee;
+        }
+        .match .status {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-pending {
+            background: #f57c00;
+            color: #fff;
+        }
+        .status-finished {
+            background: #2e7d32;
+            color: #fff;
+        }
+        .status-over {
+            background: #c62828;
+            color: #fff;
+        }
+        .match .passed {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .no-results {
+            color: #ff6b6b;
+            padding: 30px;
+            text-align: center;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+        .history-section {
+            margin-top: 40px;
+            border-top: 2px solid #333;
+            padding-top: 20px;
+        }
+        .history-section h2 {
+            color: #90caf9;
+        }
+        .history-item {
+            background: #12121f;
+            padding: 10px 16px;
+            margin: 6px 0;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item .date {
+            color: #888;
+            font-size: 12px;
+        }
+        .history-item .result {
+            font-weight: bold;
+        }
+        .result-over {
+            color: #ef5350;
+        }
+        .result-under {
+            color: #66bb6a;
+        }
+        .result-unknown {
+            color: #ffa726;
+        }
+        @media (max-width: 600px) {
+            .toolbar button {
+                width: 100%;
+            }
+            .status-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>⚽ Auto-Filter + Historia</h1>
+
+    <div class="toolbar">
+        <button class="btn-primary" onclick="fetchAndDisplay()">🔄 Sprawdź teraz</button>
+        <button onclick="clearHistory()">🗑️ Wyczyść historię</button>
+        <button onclick="exportHistory()">📥 Eksportuj historię (JSON)</button>
+    </div>
+
+    <div class="status-bar">
+        <span class="info" id="lastUpdate">Ostatnie sprawdzenie: —</span>
+        <span class="info" id="matchCount">Znaleziono: 0 meczów</span>
+        <span class="badge" id="autoBadge">⏳ Auto-odświeżanie co 60s</span>
+    </div>
+
+    <div id="results">
+        <div class="no-results">⏳ Kliknij "Sprawdź teraz" lub poczekaj na automatyczne odświeżenie...</div>
+    </div>
+
+    <div class="history-section">
+        <h2>📜 Historia wykrytych meczów</h2>
+        <div id="historyContainer">
+            <p style="color:#888;">Brak zapisanej historii.</p>
+        </div>
+    </div>
+
+    <script>
+        // ===== KONFIGURACJA =====
+        const PROGI = {
+            A: { nazwa: 'U5.5', wartosc: 0 },
+            B: { nazwa: 'SZYBKI ATAK: ROŻNY (OVER)', minPkt: 90 },
+            C: { nazwa: 'ROŻNE HT (OVER 4.5)', minPkt: 90 },
+            D: { nazwa: 'DOMINACJA', minPkt: 80 }
+        };
+
+        const SOURCE_URL = 'https://szymoooo.github.io/bzdetykotlety/auto.html';
+        const REFRESH_INTERVAL = 60000; // 60 sekund
+
+        // ===== POMOCNICZE =====
+        function extractMatchData(block) {
+            // Wyciągamy U5.5
+            const u55Match = block.match(/U5\.5:\s*(\d+)/);
+            const u55 = u55Match ? parseInt(u55Match[1]) : null;
+
+            // Wyciągamy wszystkie "score-high" dla interesujących nas modeli
+            const scoreHighs = [];
+            const regex = /(SZYBKI ATAK|ROŻNE HT|DOMINACJA)[^]*?(\d+)\s*pkt/g;
+            let match;
+            while ((match = regex.exec(block)) !== null) {
+                const nazwa = match[1].trim();
+                const pkt = parseInt(match[2]);
+                scoreHighs.push({ nazwa, pkt });
+            }
+
+            // Status meczu – czy jest PENDING czy już zakończony?
+            const pendingMatch = block.match(/PENDING/g);
+            const isPending = pendingMatch ? pendingMatch.length > 0 : false;
+
+            // Próba wyciągnięcia wyniku końcowego (jeśli jest) – np. "2:1"
+            const scoreMatch = block.match(/(\d+)\s*[:]\s*(\d+)/);
+            let finalScore = null;
+            if (scoreMatch) {
+                finalScore = { home: parseInt(scoreMatch[1]), away: parseInt(scoreMatch[2]) };
+            }
+
+            // Nazwy drużyn
+            const nazwyMatch = block.match(/[A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+/);
+            const tytul = nazwyMatch ? nazwyMatch[0] : 'Nieznany mecz';
+
+            // Sprawdzamy kryteria
+            const passA = (u55 !== null && u55 === PROGI.A.wartosc);
+            const passB = scoreHighs.some(s => s.nazwa.includes('SZYBKI ATAK') && s.pkt >= PROGI.B.minPkt);
+            const passC = scoreHighs.some(s => s.nazwa.includes('ROŻNE HT') && s.pkt >= PROGI.C.minPkt);
+            const passD = scoreHighs.some(s => s.nazwa.includes('DOMINACJA') && s.pkt >= PROGI.D.minPkt);
+
+            const passes = passA && passB && passC && passD;
+
+            return {
+                tytul,
+                u55,
+                scoreHighs: scoreHighs.filter(s =>
+                    s.nazwa.includes('SZYBKI ATAK') ||
+                    s.nazwa.includes('ROŻNE HT') ||
+                    s.nazwa.includes('DOMINACJA')
+                ),
+                isPending,
+                finalScore,
+                passes,
+                passA,
+                passB,
+                passC,
+                passD
+            };
+        }
+
+        function getMatchKey(match) {
+            return match.tytul + '|' + match.u55;
+        }
+
+        // ===== GŁÓWNA FUNKCJA POBIERANIA =====
+        async function fetchAndDisplay() {
+            const resultsDiv = document.getElementById('results');
+            const lastUpdateSpan = document.getElementById('lastUpdate');
+            const matchCountSpan = document.getElementById('matchCount');
+
+            try {
+                resultsDiv.innerHTML = '<div class="no-results">⏳ Ładowanie danych...</div>';
+
+                const response = await fetch(SOURCE_URL);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const html = await response.text();
+
+                // Tworzymy wirtualny DOM do parsowania
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const text = doc.body.innerText;
+
+                // Dzielimy na bloki przed każdym "U5.5:"
+                const bloki = text.split(/(?=U5\.5:\s*\d+)/).slice(1);
+
+                const znalezione = [];
+                const noweMecze = [];
+
+                bloki.forEach(block => {
+                    const data = extractMatchData(block);
+                    if (data.passes) {
+                        znalezione.push(data);
+                        // Sprawdzamy, czy ten mecz był już w historii
+                        const key = getMatchKey(data);
+                        const history = getHistory();
+                        if (!history.some(h => h.key === key)) {
+                            noweMecze.push(data);
+                        }
+                    }
+                });
+
+                // Wyświetlamy znalezione mecze
+                if (znalezione.length === 0) {
+                    resultsDiv.innerHTML = '<div class="no-results">❌ Żaden mecz nie spełnia kryteriów.</div>';
+                } else {
+                    let htmlOut = '';
+                    znalezione.forEach((w, i) => {
+                        const statusClass = w.isPending ? 'status-pending' : 'status-finished';
+                        const statusText = w.isPending ? 'PENDING' : 'ZAKOŃCZONY';
+                        htmlOut += `
+                            <div class="match">
+                                <div class="title">
+                                    ${w.tytul}
+                                    <span class="status ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="detail"><strong>U5.5:</strong> ${w.u55}</div>
+                                ${w.scoreHighs.map(s => `<div class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</div>`).join('')}
+                                ${w.finalScore ? `<div class="detail"><strong>Wynik końcowy:</strong> ${w.finalScore.home}:${w.finalScore.away}</div>` : ''}
+                                <div class="passed">✅ SPEŁNIA WSZYSTKIE WYMAGANIA</div>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = htmlOut;
+                }
+
+                // Aktualizujemy licznik
+                matchCountSpan.textContent = `Znaleziono: ${znalezione.length} meczów`;
+
+                // Zapisujemy NOWE mecze do historii
+                if (noweMecze.length > 0) {
+                    const history = getHistory();
+                    noweMecze.forEach(m => {
+                        history.push({
+                            key: getMatchKey(m),
+                            tytul: m.tytul,
+                            u55: m.u55,
+                            scoreHighs: m.scoreHighs,
+                            isPending: m.isPending,
+                            finalScore: m.finalScore,
+                            firstSeen: new Date().toISOString(),
+                            lastChecked: new Date().toISOString()
+                        });
+                    });
+                    saveHistory(history);
+                }
+
+                // Aktualizujemy historię – aktualizujemy statusy i wyniki
+                updateHistoryWithCurrentData(znalezione);
+
+                // Wyświetlamy historię
+                renderHistory();
+
+                // Aktualizujemy czas
+                lastUpdateSpan.textContent = `Ostatnie sprawdzenie: ${new Date().toLocaleString()}`;
+
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="no-results">❌ Błąd: ${error.message}</div>`;
+                console.error(error);
+            }
+        }
+
+        // ===== OBSŁUGA HISTORII (localStorage) =====
+        function getHistory() {
+            try {
+                const data = localStorage.getItem('autoFilterHistory');
+                return data ? JSON.parse(data) : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function saveHistory(history) {
+            localStorage.setItem('autoFilterHistory', JSON.stringify(history));
+        }
+
+        function clearHistory() {
+            if (confirm('Usunąć całą historię?')) {
+                localStorage.removeItem('autoFilterHistory');
+                renderHistory();
+            }
+        }
+
+        function exportHistory() {
+            const history = getHistory();
+            if (history.length === 0) {
+                alert('Brak historii do eksportu.');
+                return;
+            }
+            const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `historia_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function updateHistoryWithCurrentData(aktualneMecze) {
+            const history = getHistory();
+            if (history.length === 0) return;
+
+            // Tworzymy mapę aktualnych meczów po kluczu
+            const currentMap = {};
+            aktualneMecze.forEach(m => {
+                currentMap[getMatchKey(m)] = m;
+            });
+
+            // Aktualizujemy każdy wpis w historii
+            let changed = false;
+            history.forEach(h => {
+                const current = currentMap[h.key];
+                if (current) {
+                    // Aktualizujemy status i wynik
+                    if (h.isPending !== current.isPending) {
+                        h.isPending = current.isPending;
+                        changed = true;
+                    }
+                    if (current.finalScore) {
+                        if (!h.finalScore || h.finalScore.home !== current.finalScore.home || h.finalScore.away !== current.finalScore.away) {
+                            h.finalScore = current.finalScore;
+                            changed = true;
+                        }
+                    }
+                    h.lastChecked = new Date().toISOString();
+                } else {
+                    // Mecz zniknął z listy – oznaczamy jako zakończony jeśli był PENDING
+                    if (h.isPending) {
+                        h.isPending = false;
+                        changed = true;
+                    }
+                }
+            });
+
+            if (changed) {
+                saveHistory(history);
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            const history = getHistory();
+
+            if (history.length === 0) {
+                container.innerHTML = '<p style="color:#888;">Brak zapisanej historii.</p>';
+                return;
+            }
+
+            // Sortujemy od najnowszych
+            const sorted = [...history].sort((a, b) => new Date(b.firstSeen) - new Date(a.firstSeen));
+
+            let html = '';
+            sorted.forEach(h => {
+                const data = h;
+                const statusText = data.isPending ? 'PENDING' : 'ZAKOŃCZONY';
+                const statusClass = data.isPending ? 'status-pending' : 'status-finished';
+
+                // Czy mecz zakończył się OVER 4.5?
+                let resultText = '—';
+                let resultClass = 'result-unknown';
+                if (data.finalScore) {
+                    const total = data.finalScore.home + data.finalScore.away;
+                    if (total >= 5) {
+                        resultText = `OVER 4.5 (${total} bramek) ✅`;
+                        resultClass = 'result-over';
+                    } else {
+                        resultText = `UNDER 4.5 (${total} bramek) ❌`;
+                        resultClass = 'result-under';
+                    }
+                } else if (!data.isPending) {
+                    resultText = 'Brak wyniku';
+                    resultClass = 'result-unknown';
+                } else {
+                    resultText = 'Trwa...';
+                    resultClass = 'result-unknown';
+                }
+
+                const firstSeen = new Date(data.firstSeen).toLocaleString();
+                const lastChecked = new Date(data.lastChecked).toLocaleString();
+
+                html += `
+                    <div class="history-item">
+                        <div>
+                            <strong>${data.tytul}</strong>
+                            <span class="status ${statusClass}">${statusText}</span>
+                            <span class="result ${resultClass}">${resultText}</span>
+                        </div>
+                        <div class="date">
+                            🕒 ${firstSeen} | Ostatnio: ${lastChecked}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ===== AUTO-ODŚWIEŻANIE =====
+        let autoRefreshTimer = null;
+
+        function startAutoRefresh() {
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = setInterval(() => {
+                fetchAndDisplay();
+            }, REFRESH_INTERVAL);
+        }
+
+        // ===== START =====
+        // Pierwsze uruchomienie po załadowaniu strony
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchAndDisplay();
+            startAutoRefresh();
+        });
+
+        // ===== DODATKOWO – przycisk do ręcznego zatrzymania auto (opcjonalnie) =====
+        // Można dodać później, jeśli będzie potrzebne
+    </script>
+
+</body>
+</html>
