@@ -69,7 +69,6 @@
       color: #fff;
     }
 
-    /* Kafle – siatka */
     .kafelki {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -140,7 +139,6 @@
       border-radius: 8px;
     }
 
-    /* Historia */
     .history-section {
       margin-top: 40px;
       border-top: 2px solid #333;
@@ -184,12 +182,10 @@
   <span class="badge" id="autoBadge">⏳ Następne zaplanowane: —</span>
 </div>
 
-<!-- Kafle aktywnych meczów -->
 <div id="kafelkiContainer" class="kafelki">
   <div class="no-results">⏳ Kliknij "Sprawdź teraz" lub poczekaj na automatyczne odświeżenie...</div>
 </div>
 
-<!-- Historia -->
 <div class="history-section">
   <h2>📜 Historia rozstrzygniętych</h2>
   <div id="historyContainer">
@@ -208,46 +204,68 @@
   const SOURCE_URL = 'https://szymoooo.github.io/bzdetykotlety/auto.html';
   const SCHEDULED_TIMES = ['09:00', '10:00', '11:00'];
 
-  // ===== POMOCNICZE =====
-  function extractMatchData(block) {
-    const u55Match = block.match(/U5\.5:\s*(\d+)/);
-    const u55 = u55Match ? parseInt(u55Match[1]) : null;
-
-    const scoreHighs = [];
-    const regex = /(SZYBKI ATAK|ROŻNE HT|DOMINACJA)[^]*?(\d+)\s*pkt/g;
-    let match;
-    while ((match = regex.exec(block)) !== null) {
-      const nazwa = match[1].trim();
-      const pkt = parseInt(match[2]);
-      scoreHighs.push({ nazwa, pkt });
+  // ===== TWOJA LOGIKA PARSOWANIA (na podstawie vs) =====
+  function parseMatchesFromText(text) {
+    const vsRegex = /([A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+)/g;
+    let matches = [];
+    let m;
+    while ((m = vsRegex.exec(text)) !== null) {
+      matches.push({
+        start: m.index,
+        end: m.index + m[0].length,
+        full: m[0]
+      });
     }
 
-    const pendingMatch = block.match(/PENDING/g);
-    const isPending = pendingMatch ? pendingMatch.length > 0 : false;
+    const bloki = [];
+    for (let i = 0; i < matches.length; i++) {
+      const start = matches[i].start;
+      const end = (i + 1 < matches.length) ? matches[i+1].start : text.length;
+      const block = text.substring(start, end);
+      bloki.push(block);
+    }
 
-    // Nazwy drużyn
-    const nazwyMatch = block.match(/[A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+/);
-    const tytul = nazwyMatch ? nazwyMatch[0] : 'Nieznany mecz';
+    const wyniki = [];
+    bloki.forEach(block => {
+      const u55Match = block.match(/U5\.5:\s*(\d+)/);
+      const u55 = u55Match ? parseInt(u55Match[1]) : null;
 
-    // Sprawdzamy kryteria
-    const passA = (u55 !== null && u55 === PROGI.A.wartosc);
-    const passB = scoreHighs.some(s => s.nazwa.includes('SZYBKI ATAK') && s.pkt >= PROGI.B.minPkt);
-    const passC = scoreHighs.some(s => s.nazwa.includes('ROŻNE HT') && s.pkt >= PROGI.C.minPkt);
-    const passD = scoreHighs.some(s => s.nazwa.includes('DOMINACJA') && s.pkt >= PROGI.D.minPkt);
+      const scoreHighs = [];
+      const regex = /(SZYBKI ATAK|ROŻNE HT|DOMINACJA)[^]*?(\d+)\s*pkt/g;
+      let match;
+      while ((match = regex.exec(block)) !== null) {
+        const nazwa = match[1].trim();
+        const pkt = parseInt(match[2]);
+        if (nazwa.includes('SZYBKI ATAK') || nazwa.includes('ROŻNE HT') || nazwa.includes('DOMINACJA')) {
+          scoreHighs.push({ nazwa, pkt });
+        }
+      }
 
-    const passes = passA && passB && passC && passD;
+      const passA = (u55 !== null && u55 === PROGI.A.wartosc);
+      const passB = scoreHighs.some(s => s.nazwa.includes('SZYBKI ATAK') && s.pkt >= PROGI.B.minPkt);
+      const passC = scoreHighs.some(s => s.nazwa.includes('ROŻNE HT') && s.pkt >= PROGI.C.minPkt);
+      const passD = scoreHighs.some(s => s.nazwa.includes('DOMINACJA') && s.pkt >= PROGI.D.minPkt);
 
-    return {
-      tytul,
-      u55,
-      scoreHighs: scoreHighs.filter(s =>
-        s.nazwa.includes('SZYBKI ATAK') ||
-        s.nazwa.includes('ROŻNE HT') ||
-        s.nazwa.includes('DOMINACJA')
-      ),
-      isPending,
-      passes
-    };
+      if (passA && passB && passC && passD) {
+        const nazwyMatch = block.match(/[A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+/);
+        const tytul = nazwyMatch ? nazwyMatch[0] : 'Nieznany mecz';
+
+        const pendingMatch = block.match(/PENDING/g);
+        const isPending = pendingMatch ? pendingMatch.length > 0 : false;
+
+        wyniki.push({
+          tytul,
+          u55,
+          scoreHighs: scoreHighs.filter(s =>
+            s.nazwa.includes('SZYBKI ATAK') ||
+            s.nazwa.includes('ROŻNE HT') ||
+            s.nazwa.includes('DOMINACJA')
+          ),
+          isPending
+        });
+      }
+    });
+    return wyniki;
   }
 
   function getMatchKey(match) {
@@ -271,25 +289,12 @@
       const doc = parser.parseFromString(html, 'text/html');
       const text = doc.body.innerText;
 
-      // Dzielimy przed U5.5:
-      const bloki = text.split(/(?=U5\.5:\s*\d+)/).slice(1);
-
-      const znalezione = [];
-      bloki.forEach(block => {
-        const data = extractMatchData(block);
-        if (data.passes) {
-          znalezione.push(data);
-        }
-      });
-
-      // Pobieramy historię, aby odfiltrować już rozstrzygnięte
+      const znalezione = parseMatchesFromText(text);
       const history = getHistory();
       const historyKeys = new Set(history.map(h => h.key));
 
-      // Aktywne = takie, które nie są w historii
-      const aktywne = znalezione.filter(m => !historyKeys.has(getMatchKey(m)));
+      const aktywne = znalezione.filter(m => m.isPending && !historyKeys.has(getMatchKey(m)));
 
-      // Wyświetlamy kafle
       if (aktywne.length === 0) {
         container.innerHTML = '<div class="no-results">❌ Brak aktywnych meczów spełniających kryteria.</div>';
       } else {
@@ -331,17 +336,14 @@
       return;
     }
 
-    // Sprawdzamy, czy mecz nadal istnieje (czy ktoś już go nie zapisał)
     const kafelek = document.querySelector(`.kafelek[data-key="${key}"]`);
     if (!kafelek) {
       alert('Ten mecz został już rozstrzygnięty.');
       return;
     }
 
-    // Określamy status
     const status = val >= 4 ? 'WYGRANY' : 'PRZEGRANY';
 
-    // Zapisujemy w historii
     const history = getHistory();
     history.push({
       key: key,
@@ -352,24 +354,18 @@
     });
     saveHistory(history);
 
-    // Usuwamy kafelek z DOM
     kafelek.remove();
 
-    // Aktualizujemy licznik
     const countSpan = document.getElementById('matchCount');
     const activeCount = document.querySelectorAll('.kafelek').length;
     countSpan.textContent = `Aktywne: ${activeCount}`;
 
-    // Jeśli nie ma już kafeli, wyświetlamy komunikat
     if (activeCount === 0) {
       const container = document.getElementById('kafelkiContainer');
       container.innerHTML = '<div class="no-results">❌ Brak aktywnych meczów spełniających kryteria.</div>';
     }
 
-    // Odświeżamy historię
     renderHistory();
-
-    // Opcjonalnie – informacja
     alert(`Zapisano: ${tytul} → ${val} rzutów rożnych → ${status}`);
   }
 
@@ -387,7 +383,7 @@
     if (confirm('Usunąć całą historię?')) {
       localStorage.removeItem('snajperHistory');
       renderHistory();
-      fetchAndDisplay(); // odświeżamy listę aktywnych (mogą wrócić)
+      fetchAndDisplay();
     }
   }
   function exportHistory() {
@@ -428,7 +424,7 @@
     container.innerHTML = html;
   }
 
-  // ===== HARMONOGRAM (9:00, 10:00, 11:00) =====
+  // ===== HARMONOGRAM =====
   function getNextScheduledTime() {
     const now = new Date();
     const current = now.getHours() * 60 + now.getMinutes();
