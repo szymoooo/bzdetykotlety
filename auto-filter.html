@@ -135,6 +135,15 @@
       display: inline-block;
       color: #fff;
     }
+    .status-archived {
+      background: #6c757d;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      color: #fff;
+    }
 
     .no-results {
       color: #ff6b6b;
@@ -183,8 +192,8 @@
     }
     .win { color: #4caf50; font-weight: bold; }
     .lose { color: #ef5350; font-weight: bold; }
+    .pending-result { color: #ffa726; font-weight: bold; }
 
-    /* Formularz ręcznego dodawania */
     .manual-form {
       background: #1a1a2e;
       padding: 16px 20px;
@@ -225,6 +234,35 @@
       margin-left: auto;
     }
 
+    /* Edycja w historii – mały formularz inline */
+    .edit-form {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+    }
+    .edit-form input {
+      width: 70px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #0f0f1a;
+      color: #eee;
+      font-size: 14px;
+    }
+    .edit-form button {
+      padding: 4px 12px;
+      background: #1976d2;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    .edit-form button:hover { background: #1e88e5; }
+
     @media (max-width: 600px) {
       .toolbar button { width: 100%; }
       .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
@@ -232,6 +270,7 @@
       .history-item .date { margin-left: 0; margin-top: 4px; }
       .manual-form { flex-direction: column; align-items: stretch; }
       .manual-form .info-text { margin-left: 0; }
+      .edit-form { margin-left: 0; margin-top: 6px; }
     }
   </style>
 </head>
@@ -315,9 +354,11 @@
       while ((match = regex.exec(block)) !== null) {
         const nazwa = match[1].trim();
         const pkt = parseInt(match[2]);
-        // Dodajemy tylko unikalne? – dla uproszczenia zostawiamy wszystkie, ale w historii pokażemy tylko pierwsze wystąpienie każdego modelu (później)
         if (nazwa.includes('SZYBKI ATAK') || nazwa.includes('ROŻNE HT') || nazwa.includes('DOMINACJA')) {
-          scoreHighs.push({ nazwa, pkt });
+          // Usuwamy duplikaty – zostawiamy tylko pierwsze wystąpienie każdego modelu
+          if (!scoreHighs.some(s => s.nazwa === nazwa)) {
+            scoreHighs.push({ nazwa, pkt });
+          }
         }
       }
 
@@ -333,21 +374,10 @@
         const pendingMatch = block.match(/PENDING/g);
         const isPending = pendingMatch ? pendingMatch.length > 0 : false;
 
-        // Usuwamy duplikaty – zostawiamy tylko pierwsze wystąpienie każdego modelu
-        const unique = [];
-        const seen = new Set();
-        for (const item of scoreHighs) {
-          const key = item.nazwa;
-          if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(item);
-          }
-        }
-
         wyniki.push({
           tytul,
           u55,
-          scoreHighs: unique,
+          scoreHighs: scoreHighs,
           isPending
         });
       }
@@ -371,6 +401,17 @@
     return `${dd}.${mm}.${yyyy}, ${hh}:${min}:${sec}`;
   }
 
+  // ===== PAMIĘĆ POPRZEDNIEJ LISTY AKTYWNYCH =====
+  function getPreviousActiveKeys() {
+    try {
+      const data = localStorage.getItem('snajperPreviousActive');
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  }
+  function savePreviousActiveKeys(keys) {
+    localStorage.setItem('snajperPreviousActive', JSON.stringify(keys));
+  }
+
   // ===== GŁÓWNA FUNKCJA =====
   async function fetchAndDisplay() {
     const container = document.getElementById('kafelkiContainer');
@@ -392,8 +433,27 @@
       const history = getHistory();
       const historyKeys = new Set(history.map(h => h.key));
 
+      // Aktualne aktywne (PENDING i nie w historii)
       const aktywne = znalezione.filter(m => m.isPending && !historyKeys.has(getMatchKey(m)));
+      const activeKeys = aktywne.map(m => getMatchKey(m));
 
+      // ===== ARCHIWIZACJA – mecze, które zniknęły =====
+      const prevActive = getPreviousActiveKeys();
+      const toArchive = prevActive.filter(key => !activeKeys.includes(key) && !historyKeys.has(key));
+      if (toArchive.length > 0) {
+        // Dla każdego zarchiwizowanego meczu musimy odtworzyć dane (znalezione wcześniej)
+        // Szukamy w poprzednim wyniku (ale nie mamy go – zapamiętamy pełne dane)
+        // Użyjemy prostszego podejścia: przy każdym odświeżeniu zapamiętujemy pełne dane aktywnych meczów w osobnej zmiennej.
+        // Dla uproszczenia – zrobimy to w następnym kroku, ale teraz zaimplementujemy to od razu.
+        // Ze względu na to, że nie mamy już danych o tych meczach, użyjemy zapamiętanych wcześniej.
+        // W tym celu przed nadpisaniem `prevActive` zapisujemy pełne obiekty.
+        // Poniżej logika z użyciem zapamiętanych danych.
+      }
+
+      // Przechowujemy aktualną listę aktywnych (do następnego sprawdzenia)
+      savePreviousActiveKeys(activeKeys);
+
+      // Wyświetlamy kafle
       if (aktywne.length === 0) {
         container.innerHTML = '<div class="no-results">❌ Brak aktywnych meczów spełniających kryteria.</div>';
       } else {
@@ -420,10 +480,67 @@
       matchCountSpan.textContent = `Aktywne: ${aktywne.length}`;
       lastUpdateSpan.textContent = `Ostatnie sprawdzenie: ${new Date().toLocaleString()}`;
 
+      // ===== ARCHIWIZACJA – mecze, które zniknęły (pełna implementacja) =====
+      // Ponieważ nie mamy już danych o znikniętych meczach, musimy je odczytać z wcześniej zapisanych.
+      // W tym celu przechowujemy pełne dane aktywnych meczów w localStorage.
+      // Użyjemy funkcji do zapisu/odczytu pełnych danych.
+      archiveMissingMatches(aktywne);
+
     } catch (error) {
       container.innerHTML = `<div class="no-results">❌ Błąd: ${error.message}</div>`;
       console.error(error);
     }
+  }
+
+  // ===== ARCHIWIZACJA =====
+  function archiveMissingMatches(currentActive) {
+    const prevActiveData = getPreviousActiveData();
+    const history = getHistory();
+    const historyKeys = new Set(history.map(h => h.key));
+
+    const currentKeys = new Set(currentActive.map(m => getMatchKey(m)));
+
+    // Szukamy w prevActiveData takich, których nie ma w currentKeys i nie ma w historii
+    const toArchive = prevActiveData.filter(item => !currentKeys.has(item.key) && !historyKeys.has(item.key));
+
+    if (toArchive.length > 0) {
+      let changed = false;
+      toArchive.forEach(item => {
+        history.push({
+          key: item.key,
+          tytul: item.tytul,
+          corners: null, // brak wyniku
+          status: 'OCZEKUJE',
+          scoreHighs: item.scoreHighs || [],
+          date: new Date().toISOString(),
+          archived: true // znacznik, że to archiwum
+        });
+        changed = true;
+      });
+      if (changed) {
+        saveHistory(history);
+        // Po dodaniu do historii, aktualizujemy widok
+        renderHistory();
+      }
+    }
+
+    // Zapisujemy aktualne dane aktywne na przyszłość
+    savePreviousActiveData(currentActive.map(m => ({
+      key: getMatchKey(m),
+      tytul: m.tytul,
+      scoreHighs: m.scoreHighs
+    })));
+  }
+
+  // ===== ODCZYT/ZAPIS POPRZEDNICH DANYCH AKTYWNYCH =====
+  function getPreviousActiveData() {
+    try {
+      const data = localStorage.getItem('snajperPreviousActiveData');
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  }
+  function savePreviousActiveData(data) {
+    localStorage.setItem('snajperPreviousActiveData', JSON.stringify(data));
   }
 
   // ===== ZAPIS WYNIKU (z kafelka) =====
@@ -454,7 +571,9 @@
     const status = val >= 4 ? 'WYGRANY' : 'PRZEGRANY';
 
     const history = getHistory();
-    history.push({
+    // Usuwamy ewentualny wpis archiwalny o tym samym kluczu (jeśli został wcześniej zarchiwizowany)
+    const filtered = history.filter(h => h.key !== key);
+    filtered.push({
       key: key,
       tytul: tytul,
       corners: val,
@@ -462,7 +581,7 @@
       scoreHighs: scoreHighs,
       date: new Date().toISOString()
     });
-    saveHistory(history);
+    saveHistory(filtered);
 
     kafelek.remove();
 
@@ -495,7 +614,6 @@
       return;
     }
 
-    // Generujemy klucz – jeśli mecz o takiej nazwie już istnieje w historii, dodajemy kolejny wpis (nie sprawdzamy duplikatów)
     const key = name + '|manual_' + Date.now();
     const status = corners >= 4 ? 'WYGRANY' : 'PRZEGRANY';
     const history = getHistory();
@@ -504,17 +622,42 @@
       tytul: name,
       corners: corners,
       status: status,
-      scoreHighs: [], // brak danych punktowych (można dodać opcjonalnie)
+      scoreHighs: [],
       date: new Date().toISOString()
     });
     saveHistory(history);
 
-    // Czyścimy pola
     nameInput.value = '';
     cornersInput.value = '';
 
     renderHistory();
     alert(`Dodano: ${name} → ${corners} rzutów rożnych → ${status}`);
+  }
+
+  // ===== EDYCJA ZARCHIWIZOWANEGO MECZU (uzupełnienie wyniku) =====
+  function editArchived(key) {
+    const input = document.getElementById(`edit_corners_${key}`);
+    if (!input) return;
+    const val = parseInt(input.value);
+    if (isNaN(val) || val < 0) {
+      alert('Wpisz poprawną liczbę rzutów rożnych (≥0)');
+      return;
+    }
+
+    const history = getHistory();
+    const idx = history.findIndex(h => h.key === key);
+    if (idx === -1) {
+      alert('Nie znaleziono rekordu.');
+      return;
+    }
+
+    const status = val >= 4 ? 'WYGRANY' : 'PRZEGRANY';
+    history[idx].corners = val;
+    history[idx].status = status;
+    history[idx].archived = false; // usuwamy flagę archiwum
+    saveHistory(history);
+    renderHistory();
+    alert(`Zaktualizowano: ${history[idx].tytul} → ${val} rzutów rożnych → ${status}`);
   }
 
   // ===== OBSŁUGA HISTORII (localStorage) =====
@@ -530,6 +673,8 @@
   function clearHistory() {
     if (confirm('Usunąć całą historię?')) {
       localStorage.removeItem('snajperHistory');
+      localStorage.removeItem('snajperPreviousActiveData');
+      localStorage.removeItem('snajperPreviousActive');
       renderHistory();
       fetchAndDisplay();
     }
@@ -556,7 +701,7 @@
     const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
     let html = '';
     sorted.forEach(h => {
-      const statusClass = h.status === 'WYGRANY' ? 'win' : 'lose';
+      const statusClass = h.status === 'WYGRANY' ? 'win' : (h.status === 'PRZEGRANY' ? 'lose' : 'pending-result');
       const dateStr = formatDate(h.date);
       let detailsHtml = '';
       if (h.scoreHighs && h.scoreHighs.length) {
@@ -564,12 +709,25 @@
           `<span class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</span>`
         ).join('');
       }
+
+      // Jeśli status to OCZEKUJE, pokazujemy formularz do uzupełnienia
+      let editForm = '';
+      if (h.status === 'OCZEKUJE') {
+        editForm = `
+          <span class="edit-form">
+            <input type="number" id="edit_corners_${h.key}" min="0" step="1" placeholder="wynik" style="width:60px;">
+            <button onclick="editArchived('${h.key}')">Uzupełnij</button>
+          </span>
+        `;
+      }
+
       html += `
         <div class="history-item">
           <div class="main">
             <strong>${h.tytul}</strong>
             <span class="${statusClass}">${h.status}</span>
-            <span>(${h.corners} rzutów rożnych)</span>
+            ${h.corners !== null ? `(${h.corners} rzutów rożnych)` : ''}
+            ${editForm}
           </div>
           <div class="details">
             ${detailsHtml}
