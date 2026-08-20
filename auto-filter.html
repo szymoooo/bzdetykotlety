@@ -46,6 +46,11 @@
       color: #fff !important;
     }
     .btn-danger:hover { background: #f44336 !important; }
+    .btn-secondary {
+      background: #1976d2 !important;
+      color: #fff !important;
+    }
+    .btn-secondary:hover { background: #1e88e5 !important; }
 
     .status-bar {
       background: #1a1a2e;
@@ -155,14 +160,18 @@
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
+      gap: 6px 12px;
+    }
+    .history-item .main {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 12px;
     }
     .history-item .details {
-      flex: 1;
       display: flex;
       flex-wrap: wrap;
       gap: 8px 16px;
-    }
-    .history-item .details .detail {
       color: #bbb;
       font-size: 13px;
     }
@@ -170,16 +179,59 @@
     .history-item .date {
       color: #888;
       font-size: 12px;
-      margin-left: 16px;
+      margin-left: auto;
     }
     .win { color: #4caf50; font-weight: bold; }
     .lose { color: #ef5350; font-weight: bold; }
+
+    /* Formularz ręcznego dodawania */
+    .manual-form {
+      background: #1a1a2e;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 20px 0 10px 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .manual-form label {
+      color: #ccc;
+      font-size: 14px;
+    }
+    .manual-form input {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #0f0f1a;
+      color: #eee;
+      font-size: 14px;
+      flex: 1 1 180px;
+      min-width: 120px;
+    }
+    .manual-form button {
+      padding: 6px 20px;
+      background: #1976d2;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .manual-form button:hover { background: #1e88e5; }
+    .manual-form .info-text {
+      color: #888;
+      font-size: 13px;
+      margin-left: auto;
+    }
 
     @media (max-width: 600px) {
       .toolbar button { width: 100%; }
       .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
       .history-item { flex-direction: column; align-items: flex-start; }
       .history-item .date { margin-left: 0; margin-top: 4px; }
+      .manual-form { flex-direction: column; align-items: stretch; }
+      .manual-form .info-text { margin-left: 0; }
     }
   </style>
 </head>
@@ -201,6 +253,16 @@
 
 <div id="kafelkiContainer" class="kafelki">
   <div class="no-results">⏳ Kliknij "Sprawdź teraz" lub poczekaj na automatyczne odświeżenie...</div>
+</div>
+
+<!-- FORMULARZ RĘCZNEGO DODAWANIA -->
+<div class="manual-form">
+  <label for="manualMatchName">Nazwa meczu:</label>
+  <input type="text" id="manualMatchName" placeholder="np. Lland vs St" style="flex:2;">
+  <label for="manualCorners">Rzuty rożne HT:</label>
+  <input type="number" id="manualCorners" min="0" step="1" placeholder="liczba" style="width:100px;">
+  <button onclick="addManualRecord()">➕ Dodaj do historii</button>
+  <span class="info-text">(Uzupełnij brakujące mecze)</span>
 </div>
 
 <div class="history-section">
@@ -253,6 +315,7 @@
       while ((match = regex.exec(block)) !== null) {
         const nazwa = match[1].trim();
         const pkt = parseInt(match[2]);
+        // Dodajemy tylko unikalne? – dla uproszczenia zostawiamy wszystkie, ale w historii pokażemy tylko pierwsze wystąpienie każdego modelu (później)
         if (nazwa.includes('SZYBKI ATAK') || nazwa.includes('ROŻNE HT') || nazwa.includes('DOMINACJA')) {
           scoreHighs.push({ nazwa, pkt });
         }
@@ -270,14 +333,21 @@
         const pendingMatch = block.match(/PENDING/g);
         const isPending = pendingMatch ? pendingMatch.length > 0 : false;
 
+        // Usuwamy duplikaty – zostawiamy tylko pierwsze wystąpienie każdego modelu
+        const unique = [];
+        const seen = new Set();
+        for (const item of scoreHighs) {
+          const key = item.nazwa;
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push(item);
+          }
+        }
+
         wyniki.push({
           tytul,
           u55,
-          scoreHighs: scoreHighs.filter(s =>
-            s.nazwa.includes('SZYBKI ATAK') ||
-            s.nazwa.includes('ROŻNE HT') ||
-            s.nazwa.includes('DOMINACJA')
-          ),
+          scoreHighs: unique,
           isPending
         });
       }
@@ -356,7 +426,7 @@
     }
   }
 
-  // ===== ZAPIS WYNIKU =====
+  // ===== ZAPIS WYNIKU (z kafelka) =====
   function saveResult(key, idx) {
     const input = document.getElementById(`corners_${idx}`);
     if (!input) return;
@@ -372,14 +442,12 @@
       return;
     }
 
-    // Pobieramy dane punktowe z atrybutu data-scorehighs
     let scoreHighs = [];
     try {
       const raw = kafelek.dataset.scorehighs;
       if (raw) scoreHighs = JSON.parse(raw);
     } catch(e) {}
 
-    // Wyciągamy tytuł z kafelka
     const titleEl = kafelek.querySelector('.title');
     const tytul = titleEl ? titleEl.textContent : 'Nieznany mecz';
 
@@ -409,6 +477,44 @@
 
     renderHistory();
     alert(`Zapisano: ${tytul} → ${val} rzutów rożnych → ${status}`);
+  }
+
+  // ===== RĘCZNE DODAWANIE DO HISTORII =====
+  function addManualRecord() {
+    const nameInput = document.getElementById('manualMatchName');
+    const cornersInput = document.getElementById('manualCorners');
+    const name = nameInput.value.trim();
+    const corners = parseInt(cornersInput.value);
+
+    if (!name) {
+      alert('Wpisz nazwę meczu (np. "Lland vs St")');
+      return;
+    }
+    if (isNaN(corners) || corners < 0) {
+      alert('Wpisz poprawną liczbę rzutów rożnych (≥0)');
+      return;
+    }
+
+    // Generujemy klucz – jeśli mecz o takiej nazwie już istnieje w historii, dodajemy kolejny wpis (nie sprawdzamy duplikatów)
+    const key = name + '|manual_' + Date.now();
+    const status = corners >= 4 ? 'WYGRANY' : 'PRZEGRANY';
+    const history = getHistory();
+    history.push({
+      key: key,
+      tytul: name,
+      corners: corners,
+      status: status,
+      scoreHighs: [], // brak danych punktowych (można dodać opcjonalnie)
+      date: new Date().toISOString()
+    });
+    saveHistory(history);
+
+    // Czyścimy pola
+    nameInput.value = '';
+    cornersInput.value = '';
+
+    renderHistory();
+    alert(`Dodano: ${name} → ${corners} rzutów rożnych → ${status}`);
   }
 
   // ===== OBSŁUGA HISTORII (localStorage) =====
@@ -452,7 +558,6 @@
     sorted.forEach(h => {
       const statusClass = h.status === 'WYGRANY' ? 'win' : 'lose';
       const dateStr = formatDate(h.date);
-      // Budujemy szczegóły punktowe
       let detailsHtml = '';
       if (h.scoreHighs && h.scoreHighs.length) {
         detailsHtml = h.scoreHighs.map(s => 
@@ -461,10 +566,10 @@
       }
       html += `
         <div class="history-item">
-          <div>
+          <div class="main">
             <strong>${h.tytul}</strong>
             <span class="${statusClass}">${h.status}</span>
-            (${h.corners} rzutów rożnych)
+            <span>(${h.corners} rzutów rożnych)</span>
           </div>
           <div class="details">
             ${detailsHtml}
