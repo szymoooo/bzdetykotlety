@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Snajper over 3.5 pierwsza połowa</title>
   <style>
+    /* Style podstawowe naszej strony – uzupełnione o style z auto.html później */
     * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -76,7 +77,7 @@
 
     .kafelki {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
       gap: 20px;
       margin: 20px 0;
     }
@@ -88,22 +89,19 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      overflow: hidden;
     }
-    .kafelek .title {
-      font-size: 1.1em;
-      font-weight: bold;
+    .kafelek .match-card {
+      /* Style z auto.html będą tu działać po wstrzyknięciu */
     }
-    .kafelek .detail {
-      color: #bbb;
-      font-size: 14px;
-    }
-    .kafelek .detail strong { color: #eee; }
     .kafelek .input-group {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
-      margin-top: 6px;
+      margin-top: 10px;
+      border-top: 1px solid #333;
+      padding-top: 10px;
     }
     .kafelek .input-group input {
       flex: 1;
@@ -114,7 +112,7 @@
       background: #0f0f1a;
       color: #eee;
       font-size: 16px;
-      width: 80px;
+      width: 100px;
     }
     .kafelek .input-group button {
       padding: 6px 16px;
@@ -126,24 +124,6 @@
       font-weight: bold;
     }
     .kafelek .input-group button:hover { background: #66bb6a; }
-    .status-pending {
-      background: #f57c00;
-      padding: 2px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
-      display: inline-block;
-      color: #fff;
-    }
-    .status-archived {
-      background: #6c757d;
-      padding: 2px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
-      display: inline-block;
-      color: #fff;
-    }
 
     .no-results {
       color: #ff6b6b;
@@ -176,15 +156,15 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 6px 12px;
+      flex: 1;
     }
-    .history-item .details {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      color: #bbb;
-      font-size: 13px;
+    .history-item .match-card {
+      width: 100%;
+      margin: 10px 0;
+      background: #0a0a15;
+      padding: 10px;
+      border-radius: 6px;
     }
-    .history-item .details .detail strong { color: #eee; }
     .history-item .date {
       color: #888;
       font-size: 12px;
@@ -193,6 +173,33 @@
     .win { color: #4caf50; font-weight: bold; }
     .lose { color: #ef5350; font-weight: bold; }
     .pending-result { color: #ffa726; font-weight: bold; }
+    .edit-form {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+    }
+    .edit-form input {
+      width: 70px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #0f0f1a;
+      color: #eee;
+      font-size: 14px;
+    }
+    .edit-form button {
+      padding: 4px 12px;
+      background: #1976d2;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    .edit-form button:hover { background: #1e88e5; }
 
     .manual-form {
       background: #1a1a2e;
@@ -234,35 +241,6 @@
       margin-left: auto;
     }
 
-    /* Edycja w historii – mały formularz inline */
-    .edit-form {
-      display: inline-flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      margin-left: 10px;
-    }
-    .edit-form input {
-      width: 70px;
-      padding: 4px 6px;
-      border-radius: 4px;
-      border: 1px solid #444;
-      background: #0f0f1a;
-      color: #eee;
-      font-size: 14px;
-    }
-    .edit-form button {
-      padding: 4px 12px;
-      background: #1976d2;
-      border: none;
-      border-radius: 4px;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 12px;
-    }
-    .edit-form button:hover { background: #1e88e5; }
-
     @media (max-width: 600px) {
       .toolbar button { width: 100%; }
       .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
@@ -271,6 +249,11 @@
       .manual-form { flex-direction: column; align-items: stretch; }
       .manual-form .info-text { margin-left: 0; }
       .edit-form { margin-left: 0; margin-top: 6px; }
+    }
+
+    /* Style, które będą wstrzyknięte z auto.html – dodamy je później dynamicznie */
+    .match-card {
+      /* tu będą style z zewnątrz */
     }
   </style>
 </head>
@@ -294,10 +277,9 @@
   <div class="no-results">⏳ Kliknij "Sprawdź teraz" lub poczekaj na automatyczne odświeżenie...</div>
 </div>
 
-<!-- FORMULARZ RĘCZNEGO DODAWANIA -->
 <div class="manual-form">
   <label for="manualMatchName">Nazwa meczu:</label>
-  <input type="text" id="manualMatchName" placeholder="np. Lland vs St" style="flex:2;">
+  <input type="text" id="manualMatchName" placeholder="np. Olympique Marseille vs Strasbourg" style="flex:2;">
   <label for="manualCorners">Rzuty rożne HT:</label>
   <input type="number" id="manualCorners" min="0" step="1" placeholder="liczba" style="width:100px;">
   <button onclick="addManualRecord()">➕ Dodaj do historii</button>
@@ -322,71 +304,65 @@
   const SOURCE_URL = 'https://szymoooo.github.io/bzdetykotlety/auto.html';
   const SCHEDULED_TIMES = ['09:00', '10:00', '11:00'];
 
-  // ===== TWOJA LOGIKA PARSOWANIA (na podstawie vs) =====
-  function parseMatchesFromText(text) {
-    const vsRegex = /([A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+)/g;
-    let matches = [];
-    let m;
-    while ((m = vsRegex.exec(text)) !== null) {
-      matches.push({
-        start: m.index,
-        end: m.index + m[0].length,
-        full: m[0]
-      });
+  // ===== ZMIENNE GLOBALNE =====
+  let externalStylesInjected = false;
+
+  // ===== FUNKCJE POMOCNICZE =====
+  function getMatchKey(matchCardEl) {
+    const titleEl = matchCardEl.querySelector('.match-title');
+    const title = titleEl ? titleEl.textContent.trim() : 'Nieznany';
+    const u55El = matchCardEl.querySelector('.under55-low');
+    let u55 = '0';
+    if (u55El) {
+      const match = u55El.textContent.match(/U5\.5:\s*(\d+)/);
+      if (match) u55 = match[1];
     }
-
-    const bloki = [];
-    for (let i = 0; i < matches.length; i++) {
-      const start = matches[i].start;
-      const end = (i + 1 < matches.length) ? matches[i+1].start : text.length;
-      const block = text.substring(start, end);
-      bloki.push(block);
-    }
-
-    const wyniki = [];
-    bloki.forEach(block => {
-      const u55Match = block.match(/U5\.5:\s*(\d+)/);
-      const u55 = u55Match ? parseInt(u55Match[1]) : null;
-
-      const scoreHighs = [];
-      const regex = /(SZYBKI ATAK|ROŻNE HT|DOMINACJA)[^]*?(\d+)\s*pkt/g;
-      let match;
-      while ((match = regex.exec(block)) !== null) {
-        const nazwa = match[1].trim();
-        const pkt = parseInt(match[2]);
-        if (nazwa.includes('SZYBKI ATAK') || nazwa.includes('ROŻNE HT') || nazwa.includes('DOMINACJA')) {
-          // Usuwamy duplikaty – zostawiamy tylko pierwsze wystąpienie każdego modelu
-          if (!scoreHighs.some(s => s.nazwa === nazwa)) {
-            scoreHighs.push({ nazwa, pkt });
-          }
-        }
-      }
-
-      const passA = (u55 !== null && u55 === PROGI.A.wartosc);
-      const passB = scoreHighs.some(s => s.nazwa.includes('SZYBKI ATAK') && s.pkt >= PROGI.B.minPkt);
-      const passC = scoreHighs.some(s => s.nazwa.includes('ROŻNE HT') && s.pkt >= PROGI.C.minPkt);
-      const passD = scoreHighs.some(s => s.nazwa.includes('DOMINACJA') && s.pkt >= PROGI.D.minPkt);
-
-      if (passA && passB && passC && passD) {
-        const nazwyMatch = block.match(/[A-Za-zżźćńółęąś]+\s+vs\s+[A-Za-zżźćńółęąś]+/);
-        const tytul = nazwyMatch ? nazwyMatch[0] : 'Nieznany mecz';
-
-        const pendingMatch = block.match(/PENDING/g);
-        const isPending = pendingMatch ? pendingMatch.length > 0 : false;
-
-        wyniki.push({
-          tytul,
-          u55,
-          scoreHighs: scoreHighs,
-          isPending
-        });
-      }
-    });
-    return wyniki;
+    return title + '|' + u55;
   }
 
-  function getMatchKey(match) {
-    return match.tytul + '|' + match.u55;
+  function getMatchTitle(matchCardEl) {
+    const titleEl = matchCardEl.querySelector('.match-title');
+    return titleEl ? titleEl.textContent.trim() : 'Nieznany mecz';
+  }
+
+  function getScoreHighs(matchCardEl) {
+    const scoreHighs = [];
+    const modelHeaders = matchCardEl.querySelectorAll('.model-header');
+    modelHeaders.forEach(header => {
+      const span = header.querySelector('span:first-child');
+      if (!span) return;
+      const text = span.textContent;
+      const pktEl = header.querySelector('.score-high, .score-low, .score-mid');
+      if (!pktEl) return;
+      const pktText = pktEl.textContent.trim();
+      const pkt = parseInt(pktText);
+      if (!isNaN(pkt)) {
+        // Określamy nazwę modelu
+        let nazwa = '';
+        if (text.includes('SZYBKI ATAK')) nazwa = 'SZYBKI ATAK';
+        else if (text.includes('ROŻNE HT')) nazwa = 'ROŻNE HT';
+        else if (text.includes('DOMINACJA')) nazwa = 'DOMINACJA';
+        else if (text.includes('KARTKI')) nazwa = 'KARTKI';
+        else nazwa = text.trim().substring(0, 30);
+        scoreHighs.push({ nazwa, pkt });
+      }
+    });
+    return scoreHighs;
+  }
+
+  function checkCriteria(matchCardEl) {
+    const scoreHighs = getScoreHighs(matchCardEl);
+    const u55El = matchCardEl.querySelector('.under55-low');
+    let u55 = null;
+    if (u55El) {
+      const match = u55El.textContent.match(/U5\.5:\s*(\d+)/);
+      if (match) u55 = parseInt(match[1]);
+    }
+    const passA = (u55 !== null && u55 === PROGI.A.wartosc);
+    const passB = scoreHighs.some(s => s.nazwa === 'SZYBKI ATAK' && s.pkt >= PROGI.B.minPkt);
+    const passC = scoreHighs.some(s => s.nazwa === 'ROŻNE HT' && s.pkt >= PROGI.C.minPkt);
+    const passD = scoreHighs.some(s => s.nazwa === 'DOMINACJA' && s.pkt >= PROGI.D.minPkt);
+    return passA && passB && passC && passD;
   }
 
   // ===== FORMATOWANIE DATY =====
@@ -401,15 +377,25 @@
     return `${dd}.${mm}.${yyyy}, ${hh}:${min}:${sec}`;
   }
 
-  // ===== PAMIĘĆ POPRZEDNIEJ LISTY AKTYWNYCH =====
-  function getPreviousActiveKeys() {
+  // ===== POBIERANIE I WSTRZYKIWANIE STYLÓW Z auto.html =====
+  async function fetchAndInjectStyles() {
+    if (externalStylesInjected) return;
     try {
-      const data = localStorage.getItem('snajperPreviousActive');
-      return data ? JSON.parse(data) : [];
-    } catch { return []; }
-  }
-  function savePreviousActiveKeys(keys) {
-    localStorage.setItem('snajperPreviousActive', JSON.stringify(keys));
+      const resp = await fetch(SOURCE_URL);
+      const html = await resp.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const styleTags = doc.querySelectorAll('style');
+      const styleText = Array.from(styleTags).map(s => s.textContent).join('\n');
+      if (styleText) {
+        const styleEl = document.createElement('style');
+        styleEl.textContent = styleText;
+        document.head.appendChild(styleEl);
+        externalStylesInjected = true;
+      }
+    } catch(e) {
+      console.warn('Nie udało się wstrzyknąć stylów z auto.html', e);
+    }
   }
 
   // ===== GŁÓWNA FUNKCJA =====
@@ -421,37 +407,43 @@
     try {
       container.innerHTML = '<div class="no-results">⏳ Ładowanie danych...</div>';
 
+      // Najpierw wstrzykujemy style (jeśli nie zrobione)
+      await fetchAndInjectStyles();
+
       const response = await fetch(SOURCE_URL);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const html = await response.text();
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
-      const text = doc.body.innerText;
 
-      const znalezione = parseMatchesFromText(text);
+      // Znajdujemy wszystkie match-card
+      const matchCards = doc.querySelectorAll('.match-card');
+      const znalezione = [];
+      matchCards.forEach(card => {
+        if (checkCriteria(card)) {
+          const key = getMatchKey(card);
+          const title = getMatchTitle(card);
+          const scoreHighs = getScoreHighs(card);
+          // Sprawdzamy, czy mecz ma status PENDING (czyli jest aktywny)
+          const pendingEl = card.querySelector('.status-verified, .status-pending, [class*="PENDING"]');
+          const isPending = !!(card.textContent.includes('PENDING') || (pendingEl && pendingEl.textContent.includes('PENDING')));
+          znalezione.push({
+            key,
+            title,
+            scoreHighs,
+            isPending,
+            html: card.outerHTML // zapisujemy pełny HTML
+          });
+        }
+      });
+
+      // Pobieramy historię
       const history = getHistory();
       const historyKeys = new Set(history.map(h => h.key));
 
-      // Aktualne aktywne (PENDING i nie w historii)
-      const aktywne = znalezione.filter(m => m.isPending && !historyKeys.has(getMatchKey(m)));
-      const activeKeys = aktywne.map(m => getMatchKey(m));
-
-      // ===== ARCHIWIZACJA – mecze, które zniknęły =====
-      const prevActive = getPreviousActiveKeys();
-      const toArchive = prevActive.filter(key => !activeKeys.includes(key) && !historyKeys.has(key));
-      if (toArchive.length > 0) {
-        // Dla każdego zarchiwizowanego meczu musimy odtworzyć dane (znalezione wcześniej)
-        // Szukamy w poprzednim wyniku (ale nie mamy go – zapamiętamy pełne dane)
-        // Użyjemy prostszego podejścia: przy każdym odświeżeniu zapamiętujemy pełne dane aktywnych meczów w osobnej zmiennej.
-        // Dla uproszczenia – zrobimy to w następnym kroku, ale teraz zaimplementujemy to od razu.
-        // Ze względu na to, że nie mamy już danych o tych meczach, użyjemy zapamiętanych wcześniej.
-        // W tym celu przed nadpisaniem `prevActive` zapisujemy pełne obiekty.
-        // Poniżej logika z użyciem zapamiętanych danych.
-      }
-
-      // Przechowujemy aktualną listę aktywnych (do następnego sprawdzenia)
-      savePreviousActiveKeys(activeKeys);
+      // Aktywne = PENDING i nie w historii
+      const aktywne = znalezione.filter(m => m.isPending && !historyKeys.has(m.key));
 
       // Wyświetlamy kafle
       if (aktywne.length === 0) {
@@ -459,17 +451,13 @@
       } else {
         let htmlOut = '';
         aktywne.forEach((m, idx) => {
-          const key = getMatchKey(m);
-          const scoreHighsJSON = JSON.stringify(m.scoreHighs);
+          // Wstawiamy pełny HTML meczu
           htmlOut += `
-            <div class="kafelek" data-key="${key}" data-scorehighs='${scoreHighsJSON}'>
-              <div class="title">${m.tytul}</div>
-              <div class="detail"><strong>U5.5:</strong> ${m.u55}</div>
-              ${m.scoreHighs.map(s => `<div class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</div>`).join('')}
-              <div class="detail"><span class="status-pending">PENDING</span></div>
+            <div class="kafelek" data-key="${m.key}" data-title="${m.title}">
+              ${m.html}
               <div class="input-group">
                 <input type="number" id="corners_${idx}" min="0" step="1" placeholder="Rzuty rożne HT" style="width:100px;">
-                <button onclick="saveResult('${key}', ${idx})">Zapisz</button>
+                <button onclick="saveResult('${m.key}', ${idx})">Zapisz</button>
               </div>
             </div>
           `;
@@ -480,11 +468,8 @@
       matchCountSpan.textContent = `Aktywne: ${aktywne.length}`;
       lastUpdateSpan.textContent = `Ostatnie sprawdzenie: ${new Date().toLocaleString()}`;
 
-      // ===== ARCHIWIZACJA – mecze, które zniknęły (pełna implementacja) =====
-      // Ponieważ nie mamy już danych o znikniętych meczach, musimy je odczytać z wcześniej zapisanych.
-      // W tym celu przechowujemy pełne dane aktywnych meczów w localStorage.
-      // Użyjemy funkcji do zapisu/odczytu pełnych danych.
-      archiveMissingMatches(aktywne);
+      // Archiwizacja – mecze, które zniknęły
+      archiveMissingMatches(aktywne.map(m => ({ key: m.key, title: m.title, html: m.html, scoreHighs: m.scoreHighs })));
 
     } catch (error) {
       container.innerHTML = `<div class="no-results">❌ Błąd: ${error.message}</div>`;
@@ -494,45 +479,39 @@
 
   // ===== ARCHIWIZACJA =====
   function archiveMissingMatches(currentActive) {
-    const prevActiveData = getPreviousActiveData();
+    const prevActive = getPreviousActiveData();
     const history = getHistory();
     const historyKeys = new Set(history.map(h => h.key));
+    const currentKeys = new Set(currentActive.map(m => m.key));
 
-    const currentKeys = new Set(currentActive.map(m => getMatchKey(m)));
-
-    // Szukamy w prevActiveData takich, których nie ma w currentKeys i nie ma w historii
-    const toArchive = prevActiveData.filter(item => !currentKeys.has(item.key) && !historyKeys.has(item.key));
+    const toArchive = prevActive.filter(item => !currentKeys.has(item.key) && !historyKeys.has(item.key));
 
     if (toArchive.length > 0) {
       let changed = false;
       toArchive.forEach(item => {
         history.push({
           key: item.key,
-          tytul: item.tytul,
-          corners: null, // brak wyniku
-          status: 'OCZEKUJE',
+          title: item.title,
+          html: item.html,
           scoreHighs: item.scoreHighs || [],
+          corners: null,
+          status: 'OCZEKUJE',
           date: new Date().toISOString(),
-          archived: true // znacznik, że to archiwum
+          archived: true
         });
         changed = true;
       });
       if (changed) {
         saveHistory(history);
-        // Po dodaniu do historii, aktualizujemy widok
         renderHistory();
       }
     }
 
-    // Zapisujemy aktualne dane aktywne na przyszłość
-    savePreviousActiveData(currentActive.map(m => ({
-      key: getMatchKey(m),
-      tytul: m.tytul,
-      scoreHighs: m.scoreHighs
-    })));
+    // Zapisujemy aktualne aktywne
+    savePreviousActiveData(currentActive);
   }
 
-  // ===== ODCZYT/ZAPIS POPRZEDNICH DANYCH AKTYWNYCH =====
+  // ===== ODCZYT/ZAPIS POPRZEDNICH AKTYWNYCH =====
   function getPreviousActiveData() {
     try {
       const data = localStorage.getItem('snajperPreviousActiveData');
@@ -559,26 +538,26 @@
       return;
     }
 
-    let scoreHighs = [];
-    try {
-      const raw = kafelek.dataset.scorehighs;
-      if (raw) scoreHighs = JSON.parse(raw);
-    } catch(e) {}
-
-    const titleEl = kafelek.querySelector('.title');
-    const tytul = titleEl ? titleEl.textContent : 'Nieznany mecz';
+    // Pobieramy HTML meczu z kafelka (pierwszy div z klasą match-card)
+    const matchCard = kafelek.querySelector('.match-card');
+    if (!matchCard) {
+      alert('Brak danych meczu.');
+      return;
+    }
+    const html = matchCard.outerHTML;
+    const title = kafelek.dataset.title || 'Nieznany mecz';
 
     const status = val >= 4 ? 'WYGRANY' : 'PRZEGRANY';
 
     const history = getHistory();
-    // Usuwamy ewentualny wpis archiwalny o tym samym kluczu (jeśli został wcześniej zarchiwizowany)
+    // Usuwamy ewentualny archiwalny wpis o tym samym kluczu
     const filtered = history.filter(h => h.key !== key);
     filtered.push({
       key: key,
-      tytul: tytul,
+      title: title,
+      html: html,
       corners: val,
       status: status,
-      scoreHighs: scoreHighs,
       date: new Date().toISOString()
     });
     saveHistory(filtered);
@@ -595,10 +574,10 @@
     }
 
     renderHistory();
-    alert(`Zapisano: ${tytul} → ${val} rzutów rożnych → ${status}`);
+    alert(`Zapisano: ${title} → ${val} rzutów rożnych → ${status}`);
   }
 
-  // ===== RĘCZNE DODAWANIE DO HISTORII =====
+  // ===== RĘCZNE DODAWANIE =====
   function addManualRecord() {
     const nameInput = document.getElementById('manualMatchName');
     const cornersInput = document.getElementById('manualCorners');
@@ -606,7 +585,7 @@
     const corners = parseInt(cornersInput.value);
 
     if (!name) {
-      alert('Wpisz nazwę meczu (np. "Lland vs St")');
+      alert('Wpisz nazwę meczu (np. "Olympique Marseille vs Strasbourg")');
       return;
     }
     if (isNaN(corners) || corners < 0) {
@@ -619,7 +598,8 @@
     const history = getHistory();
     history.push({
       key: key,
-      tytul: name,
+      title: name,
+      html: `<div class="match-card"><div class="match-header"><div><span class="match-title">${name}</span></div></div></div>`, // uproszczony HTML
       corners: corners,
       status: status,
       scoreHighs: [],
@@ -634,7 +614,7 @@
     alert(`Dodano: ${name} → ${corners} rzutów rożnych → ${status}`);
   }
 
-  // ===== EDYCJA ZARCHIWIZOWANEGO MECZU (uzupełnienie wyniku) =====
+  // ===== EDYCJA ZARCHIWIZOWANEGO =====
   function editArchived(key) {
     const input = document.getElementById(`edit_corners_${key}`);
     if (!input) return;
@@ -654,13 +634,13 @@
     const status = val >= 4 ? 'WYGRANY' : 'PRZEGRANY';
     history[idx].corners = val;
     history[idx].status = status;
-    history[idx].archived = false; // usuwamy flagę archiwum
+    history[idx].archived = false;
     saveHistory(history);
     renderHistory();
-    alert(`Zaktualizowano: ${history[idx].tytul} → ${val} rzutów rożnych → ${status}`);
+    alert(`Zaktualizowano: ${history[idx].title} → ${val} rzutów rożnych → ${status}`);
   }
 
-  // ===== OBSŁUGA HISTORII (localStorage) =====
+  // ===== OBSŁUGA HISTORII =====
   function getHistory() {
     try {
       const data = localStorage.getItem('snajperHistory');
@@ -674,7 +654,6 @@
     if (confirm('Usunąć całą historię?')) {
       localStorage.removeItem('snajperHistory');
       localStorage.removeItem('snajperPreviousActiveData');
-      localStorage.removeItem('snajperPreviousActive');
       renderHistory();
       fetchAndDisplay();
     }
@@ -703,14 +682,6 @@
     sorted.forEach(h => {
       const statusClass = h.status === 'WYGRANY' ? 'win' : (h.status === 'PRZEGRANY' ? 'lose' : 'pending-result');
       const dateStr = formatDate(h.date);
-      let detailsHtml = '';
-      if (h.scoreHighs && h.scoreHighs.length) {
-        detailsHtml = h.scoreHighs.map(s => 
-          `<span class="detail"><strong>${s.nazwa}:</strong> ${s.pkt} pkt</span>`
-        ).join('');
-      }
-
-      // Jeśli status to OCZEKUJE, pokazujemy formularz do uzupełnienia
       let editForm = '';
       if (h.status === 'OCZEKUJE') {
         editForm = `
@@ -720,19 +691,18 @@
           </span>
         `;
       }
-
       html += `
         <div class="history-item">
           <div class="main">
-            <strong>${h.tytul}</strong>
+            <strong>${h.title}</strong>
             <span class="${statusClass}">${h.status}</span>
-            ${h.corners !== null ? `(${h.corners} rzutów rożnych)` : ''}
+            ${h.corners !== null && h.corners !== undefined ? `(${h.corners} rzutów rożnych)` : ''}
             ${editForm}
           </div>
-          <div class="details">
-            ${detailsHtml}
-          </div>
           <div class="date">🕒 ${dateStr}</div>
+          <div class="match-card" style="width:100%; margin-top:8px;">
+            ${h.html}
+          </div>
         </div>
       `;
     });
