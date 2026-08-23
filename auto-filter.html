@@ -92,13 +92,9 @@
       overflow: hidden;
       word-wrap: break-word;
     }
-    /* Wymuszamy, aby modele wewnątrz kafelka układały się w jednej kolumnie */
+    /* W aktywnej liście modele w jednej kolumnie (żeby nie było za szeroko) */
     .kafelek .match-card .models-grid {
       grid-template-columns: 1fr !important;
-    }
-    .kafelek .match-card table {
-      word-wrap: break-word;
-      table-layout: fixed;
     }
     .kafelek .input-group {
       display: flex;
@@ -157,6 +153,11 @@
       justify-content: space-between;
       align-items: center;
       gap: 6px 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .history-item:hover {
+      background: #1a1a2e;
     }
     .history-item .main {
       display: flex;
@@ -165,23 +166,27 @@
       gap: 6px 12px;
       flex: 1;
     }
-    .history-item .match-card {
+    .history-item .match-card-wrapper {
       width: 100%;
-      margin: 10px 0;
+      margin: 10px 0 0 0;
       background: #0a0a15;
       padding: 10px;
       border-radius: 6px;
-      font-size: 0.85rem;
+      display: none; /* domyślnie ukryte */
       overflow: hidden;
       word-wrap: break-word;
     }
-    .history-item .match-card .models-grid {
-      grid-template-columns: 1fr !important;
+    .history-item .match-card-wrapper.open {
+      display: block;
+    }
+    .history-item .match-card-wrapper .models-grid {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
     }
     .history-item .date {
       color: #888;
       font-size: 12px;
       margin-left: auto;
+      cursor: default;
     }
     .win { color: #4caf50; font-weight: bold; }
     .lose { color: #ef5350; font-weight: bold; }
@@ -254,6 +259,13 @@
       margin-left: auto;
     }
 
+    .toggle-hint {
+      color: #666;
+      font-size: 12px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
     @media (max-width: 768px) {
       .toolbar button { width: 100%; }
       .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
@@ -262,9 +274,12 @@
       .manual-form { flex-direction: column; align-items: stretch; }
       .manual-form .info-text { margin-left: 0; }
       .edit-form { margin-left: 0; margin-top: 6px; }
+      .history-item .match-card-wrapper .models-grid {
+        grid-template-columns: 1fr !important;
+      }
     }
 
-    /* Style z auto.html – wstrzykiwane dynamicznie, ale zabezpieczamy */
+    /* Style z auto.html – będą wstrzyknięte dynamicznie */
     .match-card {
       /* style z zewnątrz będą dodane */
     }
@@ -281,7 +296,7 @@
     .pos-badge{background:#1a3a2a;color:#00ff99;padding:2px 8px;border-radius:4px;font-size:0.8em;margin-left:8px}
     .tc-badge-N{background:#2a1a1a;color:#ff6666;padding:2px 8px;border-radius:4px;font-size:0.8em;margin-left:4px}
     .under55-low{background:#2a1a1a;color:#ff6666;padding:2px 10px;border-radius:4px;font-size:0.85em;font-weight:bold;margin-left:8px;border:1px solid #ff6666}
-    .models-grid{display:grid;grid-template-columns:1fr;gap:15px} /* na wszelki wypadek */
+    .models-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px}
     .model-box{background:#252526;padding:10px;border-radius:5px;border:1px solid #333}
     .status-active{border:1px solid #00ff00;box-shadow:0 0 8px rgba(0,255,0,0.2)}
     .status-rejected{border:1px solid #444;opacity:0.7}
@@ -477,10 +492,9 @@
       const history = getHistory();
       const historyKeys = new Set(history.map(h => h.key));
 
-      // Aktywne = PENDING i nie w historii
       const aktywne = znalezione.filter(m => m.isPending && !historyKeys.has(m.key));
 
-      // ===== ARCHIWIZACJA – mecze, które zniknęły (były wcześniej, ale teraz ich nie ma) =====
+      // ===== ARCHIWIZACJA – mecze, które zniknęły =====
       archiveMissingMatches(aktywne.map(m => ({ key: m.key, title: m.title, html: m.html, scoreHighs: m.scoreHighs })));
 
       // Wyświetlamy kafle
@@ -702,6 +716,13 @@
     URL.revokeObjectURL(url);
   }
 
+  function toggleHistoryDetails(key) {
+    const wrapper = document.querySelector(`.history-item[data-key="${key}"] .match-card-wrapper`);
+    if (wrapper) {
+      wrapper.classList.toggle('open');
+    }
+  }
+
   function renderHistory() {
     const container = document.getElementById('historyContainer');
     const history = getHistory();
@@ -719,21 +740,23 @@
         editForm = `
           <span class="edit-form">
             <input type="number" id="edit_corners_${h.key}" min="0" step="1" placeholder="wynik" style="width:60px;">
-            <button onclick="editArchived('${h.key}')">Uzupełnij</button>
+            <button onclick="event.stopPropagation(); editArchived('${h.key}')">Uzupełnij</button>
           </span>
         `;
       }
+      const matchHtml = h.html || `<div class="match-card"><div class="match-header"><div><span class="match-title">${h.title}</span></div></div></div>`;
       html += `
-        <div class="history-item">
+        <div class="history-item" data-key="${h.key}" onclick="toggleHistoryDetails('${h.key}')">
           <div class="main">
             <strong>${h.title}</strong>
             <span class="${statusClass}">${h.status}</span>
             ${h.corners !== null && h.corners !== undefined ? `(${h.corners} rzutów rożnych)` : ''}
             ${editForm}
+            <span class="toggle-hint">[kliknij aby rozwinąć]</span>
           </div>
           <div class="date">🕒 ${dateStr}</div>
-          <div class="match-card" style="width:100%; margin-top:8px; background:#0a0a15; padding:10px; border-radius:6px;">
-            ${h.html || `<div class="match-header"><div><span class="match-title">${h.title}</span></div></div>`}
+          <div class="match-card-wrapper">
+            ${matchHtml}
           </div>
         </div>
       `;
