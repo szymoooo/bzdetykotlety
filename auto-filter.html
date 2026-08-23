@@ -11,7 +11,7 @@
       background: #0f0f1a;
       color: #eee;
       padding: 20px;
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
     }
     h1 {
@@ -69,6 +69,7 @@
       color: #fff;
     }
 
+    /* Kafle – układ pionowy */
     .kafelki {
       display: flex;
       flex-direction: column;
@@ -86,15 +87,15 @@
       overflow: hidden;
       width: 100%;
     }
-    .kafelek .match-card {
-      width: 100%;
-      font-size: 0.95rem;
-      overflow: hidden;
-      word-wrap: break-word;
-    }
-    /* W aktywnej liście modele w jednej kolumnie (żeby nie było za szeroko) */
+    /* 4 modele w jednym rzędzie */
     .kafelek .match-card .models-grid {
-      grid-template-columns: 1fr !important;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 15px;
+    }
+    .kafelek .match-card table {
+      font-size: 0.8rem;
+      word-wrap: break-word;
     }
     .kafelek .input-group {
       display: flex;
@@ -153,11 +154,6 @@
       justify-content: space-between;
       align-items: center;
       gap: 6px 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .history-item:hover {
-      background: #1a1a2e;
     }
     .history-item .main {
       display: flex;
@@ -165,28 +161,32 @@
       align-items: center;
       gap: 6px 12px;
       flex: 1;
+      cursor: pointer;
     }
-    .history-item .match-card-wrapper {
+    .history-item .main:hover { opacity: 0.8; }
+    .history-item .match-card {
       width: 100%;
-      margin: 10px 0 0 0;
+      margin: 10px 0;
       background: #0a0a15;
       padding: 10px;
       border-radius: 6px;
-      display: none; /* domyślnie ukryte */
+      font-size: 0.85rem;
       overflow: hidden;
+    }
+    /* 4 modele w jednym rzędzie w historii */
+    .history-item .match-card .models-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 15px;
+    }
+    .history-item .match-card table {
+      font-size: 0.75rem;
       word-wrap: break-word;
-    }
-    .history-item .match-card-wrapper.open {
-      display: block;
-    }
-    .history-item .match-card-wrapper .models-grid {
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
     }
     .history-item .date {
       color: #888;
       font-size: 12px;
       margin-left: auto;
-      cursor: default;
     }
     .win { color: #4caf50; font-weight: bold; }
     .lose { color: #ef5350; font-weight: bold; }
@@ -218,6 +218,20 @@
       font-size: 12px;
     }
     .edit-form button:hover { background: #1e88e5; }
+
+    /* Przycisk do zwijania/rozwijania */
+    .toggle-btn {
+      background: none;
+      border: 1px solid #444;
+      color: #aaa;
+      cursor: pointer;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .toggle-btn:hover { background: #2a2a3e; }
+    .match-card-wrapper { display: none; }
+    .match-card-wrapper.open { display: block; }
 
     .manual-form {
       background: #1a1a2e;
@@ -259,14 +273,17 @@
       margin-left: auto;
     }
 
-    .toggle-hint {
-      color: #666;
-      font-size: 12px;
-      margin-left: 8px;
-      cursor: pointer;
+    @media (max-width: 1024px) {
+      .kafelek .match-card .models-grid,
+      .history-item .match-card .models-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
     }
-
     @media (max-width: 768px) {
+      .kafelek .match-card .models-grid,
+      .history-item .match-card .models-grid {
+        grid-template-columns: 1fr !important;
+      }
       .toolbar button { width: 100%; }
       .status-bar { flex-direction: column; align-items: stretch; gap: 8px; }
       .history-item { flex-direction: column; align-items: flex-start; }
@@ -274,18 +291,10 @@
       .manual-form { flex-direction: column; align-items: stretch; }
       .manual-form .info-text { margin-left: 0; }
       .edit-form { margin-left: 0; margin-top: 6px; }
-      .history-item .match-card-wrapper .models-grid {
-        grid-template-columns: 1fr !important;
-      }
-    }
-
-    /* Style z auto.html – będą wstrzyknięte dynamicznie */
-    .match-card {
-      /* style z zewnątrz będą dodane */
     }
   </style>
 
-  <!-- Zabezpieczenie – style z auto.html (wstrzykiwane później) -->
+  <!-- Style z auto.html -->
   <style>
     body{background-color:#121212;color:#e0e0e0;font-family:'Courier New',monospace;padding:20px}
     .match-card{background:#1e1e1e;border:1px solid #333;margin-bottom:30px;padding:15px;border-radius:8px}
@@ -296,7 +305,7 @@
     .pos-badge{background:#1a3a2a;color:#00ff99;padding:2px 8px;border-radius:4px;font-size:0.8em;margin-left:8px}
     .tc-badge-N{background:#2a1a1a;color:#ff6666;padding:2px 8px;border-radius:4px;font-size:0.8em;margin-left:4px}
     .under55-low{background:#2a1a1a;color:#ff6666;padding:2px 10px;border-radius:4px;font-size:0.85em;font-weight:bold;margin-left:8px;border:1px solid #ff6666}
-    .models-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px}
+    .models-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
     .model-box{background:#252526;padding:10px;border-radius:5px;border:1px solid #333}
     .status-active{border:1px solid #00ff00;box-shadow:0 0 8px rgba(0,255,0,0.2)}
     .status-rejected{border:1px solid #444;opacity:0.7}
@@ -490,9 +499,14 @@
       });
 
       const history = getHistory();
-      const historyKeys = new Set(history.map(h => h.key));
 
-      const aktywne = znalezione.filter(m => m.isPending && !historyKeys.has(m.key));
+      // ===== AKTYWNE: PENDING i NIE w historii z statusem WYGRANY/PRZEGRANY =====
+      // Mecze z "OCZEKUJE" w historii nadal są aktywne
+      const historyResolvedKeys = new Set(
+        history.filter(h => h.status === 'WYGRANY' || h.status === 'PRZEGRANY').map(h => h.key)
+      );
+
+      const aktywne = znalezione.filter(m => m.isPending && !historyResolvedKeys.has(m.key));
 
       // ===== ARCHIWIZACJA – mecze, które zniknęły =====
       archiveMissingMatches(aktywne.map(m => ({ key: m.key, title: m.title, html: m.html, scoreHighs: m.scoreHighs })));
@@ -552,7 +566,6 @@
       });
       if (changed) {
         saveHistory(history);
-        renderHistory();
       }
     }
 
@@ -570,7 +583,7 @@
     localStorage.setItem('snajperPreviousActiveData', JSON.stringify(data));
   }
 
-  // ===== ZAPIS WYNIKU (z kafelka) =====
+  // ===== ZAPIS WYNIKU =====
   function saveResult(key, idx) {
     const input = document.getElementById(`corners_${idx}`);
     if (!input) return;
@@ -716,8 +729,8 @@
     URL.revokeObjectURL(url);
   }
 
-  function toggleHistoryDetails(key) {
-    const wrapper = document.querySelector(`.history-item[data-key="${key}"] .match-card-wrapper`);
+  function toggleHistory(key) {
+    const wrapper = document.getElementById(`history_${key}`);
     if (wrapper) {
       wrapper.classList.toggle('open');
     }
@@ -740,23 +753,27 @@
         editForm = `
           <span class="edit-form">
             <input type="number" id="edit_corners_${h.key}" min="0" step="1" placeholder="wynik" style="width:60px;">
-            <button onclick="event.stopPropagation(); editArchived('${h.key}')">Uzupełnij</button>
+            <button onclick="editArchived('${h.key}')">Uzupełnij</button>
           </span>
         `;
       }
+
       const matchHtml = h.html || `<div class="match-card"><div class="match-header"><div><span class="match-title">${h.title}</span></div></div></div>`;
+
       html += `
-        <div class="history-item" data-key="${h.key}" onclick="toggleHistoryDetails('${h.key}')">
-          <div class="main">
+        <div class="history-item">
+          <div class="main" onclick="toggleHistory('${h.key}')">
             <strong>${h.title}</strong>
             <span class="${statusClass}">${h.status}</span>
             ${h.corners !== null && h.corners !== undefined ? `(${h.corners} rzutów rożnych)` : ''}
             ${editForm}
-            <span class="toggle-hint">[kliknij aby rozwinąć]</span>
+            <button class="toggle-btn">${h.status === 'OCZEKUJE' ? '📋' : '📊'}</button>
           </div>
           <div class="date">🕒 ${dateStr}</div>
-          <div class="match-card-wrapper">
-            ${matchHtml}
+          <div id="history_${h.key}" class="match-card-wrapper">
+            <div class="match-card" style="width:100%; margin-top:8px; background:#0a0a15; padding:10px; border-radius:6px;">
+              ${matchHtml}
+            </div>
           </div>
         </div>
       `;
