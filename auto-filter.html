@@ -46,6 +46,16 @@
       color: #fff !important;
     }
     .btn-danger:hover { background: #f44336 !important; }
+    .btn-secondary {
+      background: #1976d2 !important;
+      color: #fff !important;
+    }
+    .btn-secondary:hover { background: #1e88e5 !important; }
+    .btn-warning {
+      background: #f57c00 !important;
+      color: #fff !important;
+    }
+    .btn-warning:hover { background: #fb8c00 !important; }
 
     .status-bar {
       background: #1a1a2e;
@@ -69,7 +79,6 @@
       color: #fff;
     }
 
-    /* Kafle – układ pionowy */
     .kafelki {
       display: flex;
       flex-direction: column;
@@ -87,7 +96,6 @@
       overflow: hidden;
       width: 100%;
     }
-    /* 4 modele w jednym rzędzie */
     .kafelek .match-card .models-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr) !important;
@@ -173,7 +181,6 @@
       font-size: 0.85rem;
       overflow: hidden;
     }
-    /* 4 modele w jednym rzędzie w historii */
     .history-item .match-card .models-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr) !important;
@@ -219,7 +226,6 @@
     }
     .edit-form button:hover { background: #1e88e5; }
 
-    /* Przycisk do zwijania/rozwijania */
     .toggle-btn {
       background: none;
       border: 1px solid #444;
@@ -272,6 +278,9 @@
       font-size: 13px;
       margin-left: auto;
     }
+
+    /* Ukryty input do importu */
+    #fileInput { display: none; }
 
     @media (max-width: 1024px) {
       .kafelek .match-card .models-grid,
@@ -328,7 +337,9 @@
 <div class="toolbar">
   <button class="btn-primary" onclick="fetchAndDisplay()">🔄 Sprawdź teraz</button>
   <button class="btn-danger" onclick="clearHistory()">🗑️ Wyczyść historię</button>
-  <button onclick="exportHistory()">📥 Eksportuj historię (JSON)</button>
+  <button class="btn-secondary" onclick="exportHistory()">📥 Eksportuj JSON</button>
+  <button class="btn-warning" onclick="document.getElementById('fileInput').click()">📤 Importuj JSON</button>
+  <input type="file" id="fileInput" accept=".json" onchange="importHistory(event)">
 </div>
 
 <div class="status-bar">
@@ -441,6 +452,45 @@
     return `${dd}.${mm}.${yyyy}, ${hh}:${min}:${sec}`;
   }
 
+  // ===== BEZPIECZNA OBSŁUGA HISTORII Z KOPIĄ ZAPASOWĄ =====
+  function getHistory() {
+    try {
+      const data = localStorage.getItem('snajperHistory');
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+      // Jeśli główna historia jest pusta, spróbuj przywrócić z kopii
+      const backup = localStorage.getItem('snajperHistoryBackup');
+      if (backup) {
+        const parsedBackup = JSON.parse(backup);
+        if (Array.isArray(parsedBackup) && parsedBackup.length > 0) {
+          console.warn('⚠️ Historia główna pusta – przywracam z kopii zapasowej');
+          localStorage.setItem('snajperHistory', JSON.stringify(parsedBackup));
+          return parsedBackup;
+        }
+      }
+      return [];
+    } catch (e) {
+      console.error('Błąd odczytu historii', e);
+      return [];
+    }
+  }
+
+  function saveHistory(history) {
+    try {
+      // Zapisujemy główną historię
+      localStorage.setItem('snajperHistory', JSON.stringify(history));
+      // Zapisujemy kopię zapasową
+      localStorage.setItem('snajperHistoryBackup', JSON.stringify(history));
+      console.log(`✅ Historia zapisana (${history.length} wpisów)`);
+    } catch (e) {
+      console.error('Błąd zapisu historii', e);
+    }
+  }
+
   // ===== WSTRZYKIWANIE STYLÓW =====
   async function fetchAndInjectStyles() {
     if (externalStylesInjected) return;
@@ -501,7 +551,6 @@
       const history = getHistory();
 
       // ===== AKTYWNE: PENDING i NIE w historii z statusem WYGRANY/PRZEGRANY =====
-      // Mecze z "OCZEKUJE" w historii nadal są aktywne
       const historyResolvedKeys = new Set(
         history.filter(h => h.status === 'WYGRANY' || h.status === 'PRZEGRANY').map(h => h.key)
       );
@@ -699,27 +748,10 @@
     alert(`Zaktualizowano: ${history[idx].title} → ${val} rzutów rożnych → ${status}`);
   }
 
-  // ===== OBSŁUGA HISTORII =====
-  function getHistory() {
-    try {
-      const data = localStorage.getItem('snajperHistory');
-      return data ? JSON.parse(data) : [];
-    } catch { return []; }
-  }
-  function saveHistory(history) {
-    localStorage.setItem('snajperHistory', JSON.stringify(history));
-  }
-  function clearHistory() {
-    if (confirm('Usunąć całą historię?')) {
-      localStorage.removeItem('snajperHistory');
-      localStorage.removeItem('snajperPreviousActiveData');
-      renderHistory();
-      fetchAndDisplay();
-    }
-  }
+  // ===== IMPORT/EXPORT HISTORII =====
   function exportHistory() {
     const history = getHistory();
-    if (history.length === 0) { alert('Brak historii.'); return; }
+    if (history.length === 0) { alert('Brak historii do eksportu.'); return; }
     const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -729,6 +761,42 @@
     URL.revokeObjectURL(url);
   }
 
+  function importHistory(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data)) throw new Error('Nieprawidłowy format – oczekiwano tablicy');
+        if (data.length === 0) { alert('Plik jest pusty.'); return; }
+        if (confirm(`Zaimportować ${data.length} wpisów? Istniejąca historia zostanie zastąpiona.`)) {
+          saveHistory(data);
+          renderHistory();
+          fetchAndDisplay();
+          alert(`Zaimportowano ${data.length} wpisów.`);
+        }
+      } catch (err) {
+        alert('Błąd importu: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // reset
+  }
+
+  // ===== CZYSZCZENIE =====
+  function clearHistory() {
+    if (confirm('Usunąć całą historię? Tej operacji nie można cofnąć.')) {
+      localStorage.removeItem('snajperHistory');
+      localStorage.removeItem('snajperHistoryBackup');
+      localStorage.removeItem('snajperPreviousActiveData');
+      renderHistory();
+      fetchAndDisplay();
+      alert('Historia usunięta.');
+    }
+  }
+
+  // ===== RENDER HISTORII =====
   function toggleHistory(key) {
     const wrapper = document.getElementById(`history_${key}`);
     if (wrapper) {
